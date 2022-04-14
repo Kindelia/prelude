@@ -210,7 +210,7 @@
 
 // (Main) = (Get TestMap 8)
 
-  (Main a b c d e f) = 
+  (Main a) = 
     let map = Empty
     let map = (Set map a A)
-    (Get map m)
+    (Get map a)
