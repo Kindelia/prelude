@@ -6,11 +6,11 @@
 
 //-----------
 
-(Empty) = (Zip [] [])
+(Empty) = (Zip Nil Nil)
 
-(ToList xs) = (Zip Nil xs)
+(FromList xs) = (Zip Nil xs)
 
-(FromList (Zip ls rs)) = (List.Concat (List.Reverse ls) rs)
+(ToList (Zip ls rs)) = (List.Concat (List.Reverse ls) rs)
 
 (Left (Zip Nil rs)) = (Zip Nil rs)
 (Left (Zip (Cons a ls) rs)) = (Zip ls (Cons a rs))
@@ -30,4 +30,4 @@
 
 (Reverse (Zip ls rs)) = (Zip rs ls)
 
-(Main) = (Reverse (Right (Left (Insert 1 (ToList [2,3])))))
+(Main) = (Reverse (Left (Right (FromList [1,2,3]))))
