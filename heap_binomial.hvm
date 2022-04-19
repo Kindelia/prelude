@@ -1,0 +1,132 @@
+// Binomial Heap
+//
+// A Binomial Heap is represented as list of tree nodes
+//
+// A tree node of a Binomial Heap is composed of:
+//   - Its rank, which determines its size and how many children it has;
+//   - Its root value, which is lower than the values from its children (The min-heap property);
+//   - Its children, represented as a list of tree nodes.
+//
+// Type definitions:
+// type List<A: Type> {
+//     List.nil
+//     List.cons(head: A, tail: List<A>)
+// }
+//
+// type Node<Key: Type> {
+//     (rank: Nat, root: Key, children: List<Node<Key>>)
+// }
+//
+// type Heap<Key> = List<Node<Key>>
+//
+// type Maybe<A: Type> {
+//     none
+//     some(value: A)
+// }
+//
+// type Pair<A: Type, B: Type> {
+//    (fst: A, snd: B)
+// }
+
+// Helper Functions
+(IfThenElse 1 true  _) = true
+(IfThenElse 0 _ false) = false
+
+(Nat.min x y) = (IfThenElse (<= x y) x y)
+
+(List.reverse ls) = (List.reverse.aux ls Nil)
+    (List.reverse.aux  Nil        acc) = acc
+    (List.reverse.aux (Cons x xs) acc) = (List.reverse.aux xs (Cons x acc))
+
+(Pair.fst (Pair fst _)) = fst
+(Pair.snd (Pair _ snd)) = snd
+
+// "Getters"
+// Rank(n: Node<Key>) -> Nat
+(Rank (Node rank root children)) = rank
+// Root(n: Node<Key>) -> Key
+(Root (Node rank root children)) = root
+// Children(n: Node<Key>) -> Heap<Key>
+(Children (Node rank root children)) = children
+
+// Links together two trees with the same rank
+// The tree returned will be the tree with smaller root with:
+//   - the other tree as one of its children
+//   - its rank increased by 1
+// Link(n1: Node, n2: Node) -> Node
+(Link n1 n2) = (LinkAux (<= (Root n1) (Root n2)) n1 n2)
+    (LinkAux 1 (Node r1 x1 c1) n2) = (Node (+ r1 1) x1 (Cons n2 c1))
+    (LinkAux 0 n1 (Node r2 x2 c2)) = (Node (+ r2 1) x2 (Cons n1 c2))
+
+// Inserts a Tree into the heap
+// P.S.: Not to be used by itself, you could break the heap structure
+// InsertTree(new: Node, pq: Heap) -> Heap
+(InsertTree new  Nil)        = (Cons new Nil)
+(InsertTree new (Cons x xs)) = (IfThenElse (< (Rank new) (Rank x))
+    // Then
+    (Cons new (Cons x xs))
+    // Else
+    (InsertTree (Link new x) xs)
+)
+
+// Inserts a key into the heap
+// It does so by creating a Node with the key and calling InsertTree
+// Insert(x: Key, pq: Heap) -> Heap
+(Insert x pq) = (InsertTree (Node 0 x Nil) pq)
+
+// Merge together two heaps
+// Merge(pq1: Heap, pq2: Heap) -> Heap
+(Merge pq Nil) = pq
+(Merge Nil pq) = pq
+(Merge (Cons x xs) (Cons y ys)) = (IfThenElse (< (Rank x) (Rank y))
+    // Then
+    (Cons x (Merge xs (Cons y ys)))
+    // Else
+    (IfThenElse (> (Rank x) (Rank y))
+        // Then
+        (Cons y (Merge (Cons x xs) ys))
+        // Else
+        (InsertTree (Link x y) (Merge xs ys))
+    )
+)
+
+// Finds the minimal element of the heap
+// Returns Maybe.none if the heap is empty
+// FindMin(pq: Heap<Key>) -> Maybe<Key>
+(FindMin Nil)          = Maybe.none
+(FindMin (Cons t Nil)) = (Maybe.some (Root t))
+(FindMin (Cons t ts))  = (Maybe.some (FindMinAux ts (Root t)))
+    (FindMinAux  Nil        n) = n
+    (FindMinAux (Cons t ts) n) =
+        let min = (Nat.min n (Root t))
+        (FindMinAux ts min)
+
+// Removes the minimal element of the heap
+// Returns an empty heap if the heap is already empty
+// DeleteMin(pq: Heap<Key>) -> Heap<Key>
+(DeleteMin Nil) = Nil
+(DeleteMin pq)  =
+    let get_min = (GetMin pq)
+    let removed = (Pair.fst get_min)
+    let new_pq  = (Pair.snd get_min)
+    (Merge (List.reverse (Children removed)) new_pq)
+
+// Returns a pair of:
+//   - the tree with the minimal element;
+//   - the input heap without said tree;
+// GetMin(pq: Heap<Key>) -> Pair<Node<Key>,Heap<Key>>
+(GetMin (Cons x Nil)) = (Pair x Nil)
+(GetMin (Cons x xs))  =
+    let rec = (GetMin xs)
+    let rec_node = (Pair.fst rec)
+    let rec_pq = (Pair.snd rec) 
+    (IfThenElse (<= (Root x) (Root rec_node))
+        // Then
+        (Pair x xs)
+        // Else
+        (Pair rec_node (Cons x rec_pq))
+    )
+
+//(Main) = (DeleteMin
+//    [(Node 0 6 []), (Node 1 2 [(Node 0 7 [])]), (Node 2 1 [(Node 1 5 [(Node 0 6 [])]), (Node 0 9 [])])]
+//)
