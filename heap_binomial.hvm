@@ -29,10 +29,9 @@
 // }
 
 // Helper Functions
-(IfThenElse 1 true  _) = true
-(IfThenElse 0 _ false) = false
-
-(Nat.min x y) = (IfThenElse (<= x y) x y)
+(Nat.min x y) = (Nat.min.aux (<= x y) x y)
+    (Nat.min.aux 1 x y) = x
+    (Nat.min.aux 0 x y) = y
 
 (List.reverse ls) = (List.reverse.aux ls Nil)
     (List.reverse.aux  Nil        acc) = acc
@@ -40,6 +39,12 @@
 
 (Pair.fst (Pair fst _)) = fst
 (Pair.snd (Pair _ snd)) = snd
+
+// Retorna se x é maior, menor ou igual, a y
+(Battleship x y) = (BattleshipAux (< x y) (> x y))
+    (BattleshipAux 1 _) = Lesser
+    (BattleshipAux 0 1) = Greater
+    (BattleshipAux 0 0) = Equal
 
 // "Getters"
 // Rank(n: Node<Key>) -> Nat
@@ -62,12 +67,9 @@
 // P.S.: Not to be used by itself, you could break the heap structure
 // InsertTree(new: Node, pq: Heap) -> Heap
 (InsertTree new  Nil)        = (Cons new Nil)
-(InsertTree new (Cons x xs)) = (IfThenElse (< (Rank new) (Rank x))
-    // Then
-    (Cons new (Cons x xs))
-    // Else
-    (InsertTree (Link new x) xs)
-)
+(InsertTree new (Cons x xs)) = (InsertTreeAux (< (Rank new) (Rank x)) new (Cons x xs))
+    (InsertTreeAux 1 new (Cons x xs)) = (Cons new (Cons x xs))
+    (InsertTreeAux 0 new (Cons x xs)) = (InsertTree (Link new x) xs)
 
 // Inserts a key into the heap
 // It does so by creating a Node with the key and calling InsertTree
@@ -78,17 +80,10 @@
 // Merge(pq1: Heap, pq2: Heap) -> Heap
 (Merge pq Nil) = pq
 (Merge Nil pq) = pq
-(Merge (Cons x xs) (Cons y ys)) = (IfThenElse (< (Rank x) (Rank y))
-    // Then
-    (Cons x (Merge xs (Cons y ys)))
-    // Else
-    (IfThenElse (> (Rank x) (Rank y))
-        // Then
-        (Cons y (Merge (Cons x xs) ys))
-        // Else
-        (InsertTree (Link x y) (Merge xs ys))
-    )
-)
+(Merge (Cons x xs) (Cons y ys)) = (MergeAux (Battleship (Rank x) (Rank y)) (Cons x xs) (Cons y ys))
+    (MergeAux Lesser  (Cons x xs) (Cons y ys)) = (Cons x (Merge xs (Cons y ys)))
+    (MergeAux Greater (Cons x xs) (Cons y ys)) = (Cons y (Merge (Cons x xs) ys))
+    (MergeAux Equal   (Cons x xs) (Cons y ys)) = (InsertTree (Link x y) (Merge xs ys))
 
 // Finds the minimal element of the heap
 // Returns Maybe.none if the heap is empty
@@ -116,17 +111,30 @@
 //   - the input heap without said tree;
 // GetMin(pq: Heap<Key>) -> Pair<Node<Key>,Heap<Key>>
 (GetMin (Cons x Nil)) = (Pair x Nil)
-(GetMin (Cons x xs))  =
+(GetMin (Cons x xs )) =
     let rec = (GetMin xs)
+    (GetMinAux (<= (Root x) (Root (Pair.fst rec))) (Cons x xs) rec)
+
+(GetMinAux 1 (Cons x xs) rec) = (Pair x xs)
+(GetMinAux 0 (Cons x xs) rec) = 
     let rec_node = (Pair.fst rec)
     let rec_pq = (Pair.snd rec) 
-    (IfThenElse (<= (Root x) (Root rec_node))
-        // Then
-        (Pair x xs)
-        // Else
-        (Pair rec_node (Cons x rec_pq))
-    )
+    (Pair rec_node (Cons x rec_pq))
 
-//(Main) = (DeleteMin
-//    [(Node 0 6 []), (Node 1 2 [(Node 0 7 [])]), (Node 2 1 [(Node 1 5 [(Node 0 6 [])]), (Node 0 9 [])])]
-//)
+// Creates a heap using a list of natural numbers
+// ListToHeap(xs: List<Key>) -> Heap<Key>
+(ListToHeap xs) = (ListToHeapAux xs Nil)
+    (ListToHeapAux  Nil        pq) = pq
+    (ListToHeapAux (Cons x xs) pq) = (ListToHeapAux xs (Insert x pq))
+
+(Main) =
+    let heap1 = (ListToHeap [1,2,3,4,5])
+    let heap2 = (ListToHeap [6,7,8,9,10,11,12])
+    let heap3 = (ListToHeap [0,13,14,15,16,17])
+
+    let heapmaster = (Merge heap3 (Merge heap1 heap2))
+
+    //heap2
+    heapmaster
+    //(FindMin heapmaster)
+    //(DeleteMin heapmaster)
