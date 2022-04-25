@@ -8,18 +8,15 @@
     (Utils.compare.goGT 1) = GT
     (Utils.compare.goGT 0) = EQ
 
-// foldrList : (a -> b -> b) -> b -> [a] -> b
-(Utils.foldrList f z [] ) = z
-(Utils.foldrList f z (Cons x xs)) = (f x (Utils.foldrList f z xs))
-
 (Utils.getKey (Pair x y)) = x
 (Utils.getValue (Pair x y)) = y
+
+(Utils.pairApply f (Pair x y)) = (Pair (f x) (f y))
 
 // | A Map from keys @k@ to values @a@. 
 // data Map k a = Tip 
 //              | Bin Size k a (Map k a) (Map k a) 
 // type Size     = Int
-
 
 // Utility functions that maintain the balance properties of the tree.
 // All constructors assume that all values in [l] < [k] and all values
@@ -33,7 +30,6 @@
 //                     Assumes that the original tree was balanced and
 //                     that [l] or [r] has changed by at most one element.
 //   [join k x l r]    Restores balance and size. 
-
 
 // Maintains the correct size, assumes that both [l] and [r] are balanced with respect to each other.
 // bin : k -> a -> Map k a -> Map k a -> Map k a
@@ -101,7 +97,6 @@
    (Map.rotateR.aux1 1 k x l r) = (Map.singleR k x l r)
    (Map.rotateR.aux1 0 k x l r) = (Map.doubleR k x l r)
  (Map.rotateR.aux1 _ _ _ _ Tip) = "rotateR Tip"
-  
 
 // basic rotations
 // singleL, singleR : k -> a -> Map k a -> Map k a -> Map k a
@@ -125,7 +120,7 @@
       (Map.join.aux.2 1 kx x (Bin _ ky y ly ry) _ l r) = (Map.balance ky y ly (Map.join kx x ry r))
       (Map.join.aux.2 0 kx x _ _ l r) = (Map.bin kx x l r)
 
-// // insertMax,insertMin : k -> a -> Map k a -> Map k a 
+// insertMax,insertMin : k -> a -> Map k a -> Map k a 
 (Map.insertMax kx x Tip) = (Map.singleton kx x)
 (Map.insertMax kx x (Bin _ ky y l r)) = (Map.balance ky y l (Map.insertMax kx x r))
 
@@ -160,7 +155,6 @@
   (Map.glue.aux.0 0 l r) = (Map.glue.aux.rightGT (Map.deleteFindMin r) l r)
     (Map.glue.aux.rightGT (Pair (Pair km m) newR) l _) = (Map.balance km m l newR)
 
-
 // /O(log n)/. Delete and find the min/max element.
 // deleteFindMin, deleteFindMax : Map k a -> ((k, a), Map k a)
 (Map.deleteFindMin Tip) = (Pair ("Map.deleteFindMin: empty Map") Tip)
@@ -182,8 +176,31 @@
   (Map.delete.aux GT k (Bin _ kx x l r)) = (Map.balance kx x l (Map.delete k r))
   (Map.delete.aux EQ _ (Bin _ _ _ l r)) = (Map.glue l r)
 
-// (Map.split)
-// TODO: split : k -> Map k a -> (Map k a, Map k a)
+// /O(log n)/. Splits the map in two maps, one with keys smaller than k and the other with keys greater than to k.
+// Any key EQUAL to k, is not found neither in map1 nor in map2. Maybe you want 'partition' (?)
+// split : k -> Map k a -> (Map k a, Map k a)
+(Map.split k Tip) = (Pair Tip Tip)
+(Map.split k (Bin _ kx x l r)) = (Map.split.aux (Utils.compare k kx) k (Bin _ kx x l r))
+  (Map.split.aux LT k (Bin _ kx x l r)) = (Map.split.aux.goLT (Map.split k l) kx x l r)
+    (Map.split.aux.goLT (Pair lt gt) kx x l r) = (Pair lt (Map.join kx x gt r))
+  (Map.split.aux GT k (Bin _ kx x l r)) = (Map.split.aux.goGT (Map.split k r) kx x l r)
+    (Map.split.aux.goGT (Pair lt gt) kx x l r) = (Pair (Map.join kx x l lt) gt)
+  (Map.split.aux EQ _ (Bin _ _ _ l r)) = (Pair l r)
+
+// /O(log n)/. Partition the map according to a predicate. The first map contains all elements that satisfy the predicate
+// the second all elements that fail the predicate. Maybe you want 'split' (?)
+// partition : Ord k => (a -> Bool) -> Map k a -> (Map k a , Map k a)
+(Map.partition p Tip) = (Pair Tip Tip)
+(Map.partition p m) = (Map.partitionWithKey (@_ @x (p x)) m)
+
+// partitionWithKey : Ord k => (k -> a -> Bool) -> Map k a -> (Map k a , Map k a)
+(Map.partitionWithKey p Tip) = (Pair Tip Tip)
+(Map.partitionWithKey p (Bin _ kx x l r)) = 
+  let leftPair = (Map.partitionWithKey p l)
+  let rightPair = (Map.partitionWithKey p r)
+  (Map.partitionWithKey.aux (p kx x) (Bin _ kx x l r) leftPair rightPair)
+    (Map.partitionWithKey.aux 1 (Bin _ kx x l r) (Pair l1 l2) (Pair r1 r2)) = (Pair (Map.join kx x l1 r1) (Map.merge l2 r2))
+    (Map.partitionWithKey.aux 0 (Bin _ kx x l r) (Pair l1 l2) (Pair r1 r2)) = (Pair (Map.merge l1 r1) (Map.join kx x l2 r2))
 
 // empty : Map k a
 (Map.empty) = Tip
@@ -195,7 +212,6 @@
 // null : Map k a -> Bool
 (Map.null Tip) = 1
 (Map.null Bin) = 0
-
 
 // /O(1)/. The number of elements in the map.
 // size : Map k a -> Int
@@ -239,7 +255,7 @@
 
 // /O(n)/. Filter all values that satisfy the predicate.
 // filter : Ord k => (a -> Bool) -> Map k a -> Map k a
-(Map.filter k p m) = (Map.filterWithKey @_ @x (p x) m)
+(Map.filter p m) = (Map.filterWithKey (@_ @x (p x)) m)
 
 // /O(n)/. Filter all keys\/values that satisfy the predicate.
 // filterWithKey : Ord k => (k -> a -> Bool) -> Map k a -> Map k a
@@ -247,7 +263,6 @@
 (Map.filterWithKey pred (Bin _ kx x l r)) = (Map.filterWithKey.aux (pred kx x) pred (Bin _ kx x l r))
   (Map.filterWithKey.aux 1 pred (Bin _ kx x l r)) = (Map.join kx x (Map.filterWithKey pred l) (Map.filterWithKey pred r))
   (Map.filterWithKey.aux 0 pred (Bin _ _ _ l r)) = (Map.merge (Map.filterWithKey pred l) (Map.filterWithKey pred r))
-
 
 // /O(n)/. Post-order fold. The function will be applied in ascending order.
 // foldrWithKey : (k -> a -> b -> b) -> b -> Map k a -> b
@@ -257,12 +272,7 @@
 
 // /O(n)/ Generates an list of all key/value pairs in key ascending order
 // toList : Map k a -> [(k, a)]
-// FIXME: why this dont work with more than 2 elements? maybe foldrWithKey
-// (Map.toList m ) = (Map.foldrWithKey (@k @x @xs (Cons (Pair k x) xs)) [] m)
-
-
-(Utils.foldl f z []) = z
-(Utils.foldl f z (Cons x xs)) = (Utils.foldl f (f z x) xs)
+(Map.toList m ) = (Map.foldrWithKey (@k @x @xs (Cons (Pair k x) xs)) [] m)
 
 // /O(n)/ Generates an map from a list of key/value pairs.
 // fromList : [(k, a)] -> Map k a
@@ -272,11 +282,19 @@
 (TestMap) = (Map.insert 5 0 (Map.insert 4 0 (Map.insert 3 0 (Map.insert 2 0 (Map.insert 2 0 (Map.singleton 1 0))))))
 
 (PairRange 0) = []
-(PairRange n) = (Cons (Pair n 0) (PairRange (- n 1)))
+(PairRange n) = (Cons (Pair n n) (PairRange (- n 1)))
 
 // (Main n) = (Map.fromList (PairRange 1))    // rewrite: 10        // memsize 23
 // (Main n) = (Map.fromList (PairRange 10))   // rewrite: 1561      // memsize 2112
 // (Main n) = (Map.fromList (PairRange 100))  // rewrite: 103960    // memsize 165933
 // (Main n) = (Map.fromList (PairRange 1000)) // rewrite: 8852805   // memsize 15628239
-(Main n) = (Map.fromList (PairRange n))
 
+
+// Test filtering the greater half
+// (Main n) = (Map.toList (Map.filter (@x (>= x (/ n 2))) (Map.fromList (PairRange n))))
+
+// Test spliting the map in half
+// (Main n) = (Utils.pairApply (@x (Map.toList x)) (Map.split (/ n 2) (Map.fromList (PairRange n))))
+
+// Splits a list in two parts: pred true values and pred false values
+(Main) =  (Utils.pairApply (@x (Map.toList x)) (Map.partition (@x (>= x 8)) (Map.fromList (PairRange 10))))
