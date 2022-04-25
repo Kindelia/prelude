@@ -20,15 +20,17 @@
 // type Heap<Key> = List<Node<Key>>
 //
 // type Maybe<A: Type> {
-//     none
-//     some(value: A)
+//     Maybe.none
+//     Maybe.some(value: A)
 // }
 //
 // type Pair<A: Type, B: Type> {
 //    (fst: A, snd: B)
 // }
 
-// Helper Functions
+
+//* Helper Functions
+
 (Nat.min x y) = (Nat.min.aux (<= x y) x y)
     (Nat.min.aux 1 x y) = x
     (Nat.min.aux 0 x y) = y
@@ -40,19 +42,31 @@
 (Pair.fst (Pair fst _)) = fst
 (Pair.snd (Pair _ snd)) = snd
 
-// Retorna se x é maior, menor ou igual, a y
+// Decides if x is Greater, Lesser, or Equal to y
 (Battleship x y) = (BattleshipAux (< x y) (> x y))
     (BattleshipAux 1 _) = Lesser
     (BattleshipAux 0 1) = Greater
     (BattleshipAux 0 0) = Equal
 
-// "Getters"
+// Decreasing Range:
+// Creates a range from n-1 to 0
+(DecRange 0) = Nil
+(DecRange n) =
+    let dec = (- n 1)
+    (Cons dec (DecRange dec))
+
+
+//* "Getters"
+
 // Rank(n: Node<Key>) -> Nat
 (Rank (Node rank root children)) = rank
 // Root(n: Node<Key>) -> Key
 (Root (Node rank root children)) = root
 // Children(n: Node<Key>) -> Heap<Key>
 (Children (Node rank root children)) = children
+
+
+//* Heap Functions
 
 // Links together two trees with the same rank
 // The tree returned will be the tree with smaller root with:
@@ -127,14 +141,28 @@
     (ListToHeapAux  Nil        pq) = pq
     (ListToHeapAux (Cons x xs) pq) = (ListToHeapAux xs (Insert x pq))
 
-(Main) =
+
+(Main n) =
+    // Some vars
     let heap1 = (ListToHeap [1,2,3,4,5])
     let heap2 = (ListToHeap [6,7,8,9,10,11,12])
     let heap3 = (ListToHeap [0,13,14,15,16,17])
-
     let heapmaster = (Merge heap3 (Merge heap1 heap2))
 
+    // Testing Constructors
     //heap2
-    heapmaster
+    //heapmaster
     //(FindMin heapmaster)
     //(DeleteMin heapmaster)
+
+    // "Benchmarking"
+    // (ListToHeap (DecRange 10))     // 572 RW,      723 Mem Size
+    // (ListToHeap (DecRange 100))    // 13844 RW,    15816 Mem Size
+    // (ListToHeap (DecRange 1000))   // 230627 RW,   267046 Mem Size
+    // (ListToHeap (DecRange 10000))  // 3969306 RW,  4663518 Mem Size
+    // (ListToHeap (DecRange 100000)) // 56346413 RW, 66616128 Mem Size
+    // Expected complexity for ListToHeap is O(n*log(n)), because it calls Insertion (O(log n)) n times.
+    // As such, having the rewrites increase 20x when incresing the input 10x makes sense
+
+    // General use
+    (ListToHeap (DecRange n))
