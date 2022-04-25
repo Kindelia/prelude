@@ -1,0 +1,282 @@
+// TODO: what should I do with the string errors? dunno
+
+// data Ordering = GT | LT | EQ
+// compare : a -> a -> Ordering
+(Utils.compare x y) = (Utils.compare.goLT (< x y) x y)
+  (Utils.compare.goLT 1 _ _) = LT
+  (Utils.compare.goLT 0 x y) = (Utils.compare.goGT (> x y))
+    (Utils.compare.goGT 1) = GT
+    (Utils.compare.goGT 0) = EQ
+
+// foldrList : (a -> b -> b) -> b -> [a] -> b
+(Utils.foldrList f z [] ) = z
+(Utils.foldrList f z (Cons x xs)) = (f x (Utils.foldrList f z xs))
+
+(Utils.getKey (Pair x y)) = x
+(Utils.getValue (Pair x y)) = y
+
+// | A Map from keys @k@ to values @a@. 
+// data Map k a = Tip 
+//              | Bin Size k a (Map k a) (Map k a) 
+// type Size     = Int
+
+
+// Utility functions that maintain the balance properties of the tree.
+// All constructors assume that all values in [l] < [k] and all values
+// in [r] > [k], and that [l] and [r] are valid trees.
+
+// In order of sophistication:
+//   [Bin sz k x l r]  The type constructor.
+//   [bin k x l r]     Maintains the correct size, assumes that both [l]
+//                     and [r] are balanced with respect to each other.
+//   [balance k x l r] Restores the balance and size.
+//                     Assumes that the original tree was balanced and
+//                     that [l] or [r] has changed by at most one element.
+//   [join k x l r]    Restores balance and size. 
+
+
+// Maintains the correct size, assumes that both [l] and [r] are balanced with respect to each other.
+// bin : k -> a -> Map k a -> Map k a -> Map k a
+(Map.bin k x l r) = (Bin (+ (Map.size l) (+ (Map.size r) 1)) k x l r)
+
+//
+//  [Map.balance l x r] balances two trees with value x.
+//  The sizes of the trees should balance after decreasing the
+//  size of one of them. (a rotation).
+//
+//  [delta] is the maximal relative difference between the sizes of
+//          two trees, it corresponds with the [w] in Adams' paper.
+//
+//  [ratio] is the ratio between an outer and inner sibling of the
+//          heavier subtree in an unbalanced setting. It determines
+//          whether a double or single rotation should be performed
+//          to restore balance. It is correspondes with the inverse
+//          of $\alpha$ in Adam's article.
+//
+//  Note that:
+//  - [delta] should be larger than 4.646 with a [ratio] of 2.
+//  - [delta] should be larger than 3.745 with a [ratio] of 1.534.
+//  
+//  - A lower [delta] leads to a more 'perfectly' balanced tree.
+//  - A higher [delta] performs less rebalancing.
+//
+//  - Balancing is automatic for random data and a balancing
+//    scheme is only necessary to avoid pathological worst cases.
+//    Almost any choice will do, and in practice, a rather large
+//    [delta] may perform better than smaller one.
+//
+//  Note: in contrast to Adam's paper, we use a ratio of (at least) [2]
+//  to decide whether a single or double rotation is needed. Although
+//  he actually proves that this ratio is needed to maintain the
+//  invariants, his implementation uses an invalid ratio of [1].
+(Map.delta) = 4
+(Map.ratio) = 2
+
+// Restores the balance and size.
+// Assumes that the original tree was balanced and that [l] or [r] has changed by at most one element.
+// balance : k -> a -> Map k a -> Map k a -> Map k a
+(Map.balance k x l r) = 
+  let sizeL = (Map.size l)
+  let sizeR = (Map.size r)
+  let sizeX = (+ sizeL (+ sizeR 1))
+  (Map.balance.aux.0 sizeL sizeR sizeX k x l r)
+
+(Map.balance.aux.0 sizeL sizeR sizeX k x l r) = (Map.balance.aux.1 (>= 1 (+ sizeL sizeR)) sizeL sizeR sizeX k x l r)
+(Map.balance.aux.1 1 _ _ sizeX k x l r) = (Bin sizeX k x l r)
+(Map.balance.aux.1 0 sizeL sizeR sizeX k x l r) = (Map.balance.aux.2 (>= sizeR (* Map.delta sizeL)) sizeL sizeR sizeX k x l r)
+  (Map.balance.aux.2 1 sizeL sizeR sizeX k x l r) = (Map.rotateL k x l r)
+  (Map.balance.aux.2 0 sizeL sizeR sizeX k x l r) = (Map.balance.aux.3 (>= sizeL (* Map.delta sizeR)) sizeL sizeR sizeX k x l r)
+    (Map.balance.aux.3 1 sizeL sizeR sizeX k x l r) = (Map.rotateR k x l r)
+    (Map.balance.aux.3 0 sizeL sizeR sizeX k x l r) = (Bin sizeX k x l r)
+
+// Rotate
+(Map.rotateL k x l r) = (Map.rotateL.aux r l k x l r)
+ (Map.rotateL.aux r l k x l (Bin _ _ _ ly ry)) = (Map.rotateL.aux1 (< (Map.size ly) (* Map.ratio (Map.size ry))) k x l r)
+   (Map.rotateL.aux1 1 k x l r) = (Map.singleL k x l r)
+   (Map.rotateL.aux1 0 k x l r) = (Map.doubleL k x l r)
+ (Map.rotateL.aux1 _ _ _ _ Tip) = "rotateL Tip"
+
+ (Map.rotateR k x l r) = (Map.rotateR.aux r l k x l r )
+ (Map.rotateR.aux r l k x (Bin _ _ _ ly ry) r) = (Map.rotateL.aux1 (< (Map.size ly) (* Map.ratio (Map.size ry))) k x l r)
+   (Map.rotateR.aux1 1 k x l r) = (Map.singleR k x l r)
+   (Map.rotateR.aux1 0 k x l r) = (Map.doubleR k x l r)
+ (Map.rotateR.aux1 _ _ _ _ Tip) = "rotateR Tip"
+  
+
+// basic rotations
+// singleL, singleR : k -> a -> Map k a -> Map k a -> Map k a
+(Map.singleL k1 x1 t1 (Bin _ k2 x2 t2 t3)) = (Map.bin k2 x2 (Map.bin k1 x1 t1 t2) t3)
+(Map.singleL _ _ _ Tip) = "singleL Tip"
+(Map.singleR k1 x1 (Bin _ k2 x2 t1 t2) t3) = (Map.bin k2 x2 t1 (Map.bin k1 x1 t2 t3))
+(Map.singleR _ _ Tip _) = "singleR Tip"
+
+// doubleL, doubleR : k -> a -> Map k a -> Map k a -> Map k a
+(Map.doubleL k1 x1 t1 (Bin _ k2 x2 (Bin _ k3 x3 t2 t3) t4)) = (Map.bin k3 x3 (Map.bin k1 x1 t1 t2) (Map.bin k2 x2 t3 t4))
+(Map.doubleR k1 x1 (Bin _ k2 x2 t1 (Bin _ k3 x3 t2 t3)) t4) = (Map.bin k3 x3 (Map.bin k2 x2 t1 t2) (Map.bin k1 x1 t3 t4))
+
+// Restores balance and size. 
+// join : Ord k => k -> a -> Map k a -> Map k a -> Map k a
+(Map.join kx x Tip r)  = (Map.insertMin kx x r)
+(Map.join kx x l Tip)  = (Map.insertMax kx x l)
+(Map.join kx x l r) = (Map.join.aux.0 kx x l r l r)  
+(Map.join.aux.0 kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r) = (Map.join.aux.1  (>= sizeR (* Map.delta sizeL)) kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r)
+    (Map.join.aux.1 1 kx x _ (Bin _ kz z lz rz) l r) = (Map.balance kz z (Map.join kx x l lz) rz)
+    (Map.join.aux.1 0 kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r) = (Map.join.aux.2 (>= sizeL (* Map.delta sizeR)) kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r)
+      (Map.join.aux.2 1 kx x (Bin _ ky y ly ry) _ l r) = (Map.balance ky y ly (Map.join kx x ry r))
+      (Map.join.aux.2 0 kx x _ _ l r) = (Map.bin kx x l r)
+
+// // insertMax,insertMin : k -> a -> Map k a -> Map k a 
+(Map.insertMax kx x Tip) = (Map.singleton kx x)
+(Map.insertMax kx x (Bin _ ky y l r)) = (Map.balance ky y l (Map.insertMax kx x r))
+
+(Map.insertMin kx x Tip) = (Map.singleton kx x)
+(Map.insertMin kx x (Bin _ ky y l r)) = (Map.balance ky y (Map.insertMin kx x l) r)
+
+//   Also, we can construct a new tree from two trees. 
+//   Both operations assume that all values in [l] < all values in [r] and that [l] and [r] are valid:
+//     [glue l r]        Glues [l] and [r] together. 
+//                       Assumes that [l] and  [r] are already
+//                       balanced with respect to each other.
+//     [merge l r]       Merges two trees and restores balance.
+
+// Merges two trees and restores balance.
+// merge : Map k a -> Map k a -> Map k a
+(Map.merge Tip r)  = r
+(Map.merge l Tip)  = l
+(Map.merge l r) = (Map.merge.aux.0 l r l r)
+  (Map.merge.aux.0 (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r) = (Map.merge.aux.1 (>= sizeR (* Map.delta sizeL)) (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r)
+    (Map.merge.aux.1 1 _ (Bin sizeR ky y ly ry) l _) = (Map.balance ky y (Map.merge l ly) ry)
+    (Map.merge.aux.1 0 (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r) = (Map.merge.aux.2 (>= sizeL (* Map.delta sizeR)) (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r)
+      (Map.merge.aux.1 1 (Bin sizeL kx x lx rx) _ _ r) = (Map.balance kx x lx (Map.merge rx r))
+      (Map.merge.aux.1 0 _ _ l r) = (Map.glue l r)
+
+// Glues [l] and [r] together. Assumes that [l] and [r] are already balanced with respect to each other.
+// glue : Map k a -> Map k a -> Map k a 
+(Map.glue Tip r) = r
+(Map.glue l Tip) = l
+(Map.glue l r) = (Map.glue.aux.0 (> (Map.size l) (Map.size r)) l r)
+  (Map.glue.aux.0 1 l r) = (Map.glue.aux.leftGT (Map.deleteFindMax l) l r)
+    (Map.glue.aux.leftGT (Pair (Pair km m) newL) _ r) = (Map.balance km m newL r)
+  (Map.glue.aux.0 0 l r) = (Map.glue.aux.rightGT (Map.deleteFindMin r) l r)
+    (Map.glue.aux.rightGT (Pair (Pair km m) newR) l _) = (Map.balance km m l newR)
+
+
+// /O(log n)/. Delete and find the min/max element.
+// deleteFindMin, deleteFindMax : Map k a -> ((k, a), Map k a)
+(Map.deleteFindMin Tip) = (Pair ("Map.deleteFindMin: empty Map") Tip)
+(Map.deleteFindMin (Bin _ k x Tip r)) = (Pair (Pair k x) r)
+(Map.deleteFindMin (Bin _ k x l r)) = (Map.deleteFindMin.aux (Map.deleteFindMin l) k x r)
+  (Map.deleteFindMin.aux (Pair km newL) k x r) = (Pair km (Map.balance k x newL r))
+
+(Map.deleteFindMax Tip) = (Pair ("Map.deleteFindMax: empty Map") Tip)
+(Map.deleteFindMax (Bin _ k x l Tip)) = (Pair (Pair k x) l)
+(Map.deleteFindMax (Bin _ k x l r)) = (Map.deleteFindMax.aux (Map.deleteFindMax r) k x l)
+  (Map.deleteFindMax.aux (Pair km newR) k x l) = (Pair km (Map.balance k x l newR))
+
+// /O(log n)/. Delete a key and its value from the map. 
+// When the key is not a member of the map, the original map is returned.
+// delete : Ord k => k -> Map k a -> Map k a
+(Map.delete k Tip) = Tip
+(Map.delete k (Bin _ kx x l r)) = (Map.delete.aux (Utils.compare k kx) k (Bin _ kx x l r))
+  (Map.delete.aux LT k (Bin _ kx x l r)) = (Map.balance kx x (Map.delete k l) r)
+  (Map.delete.aux GT k (Bin _ kx x l r)) = (Map.balance kx x l (Map.delete k r))
+  (Map.delete.aux EQ _ (Bin _ _ _ l r)) = (Map.glue l r)
+
+// (Map.split)
+// TODO: split : k -> Map k a -> (Map k a, Map k a)
+
+// empty : Map k a
+(Map.empty) = Tip
+
+// singleton : k -> a -> Map k a
+(Map.singleton k v) = (Bin 1 k v Tip Tip)
+
+// /O(1)/. Is the map empty?
+// null : Map k a -> Bool
+(Map.null Tip) = 1
+(Map.null Bin) = 0
+
+
+// /O(1)/. The number of elements in the map.
+// size : Map k a -> Int
+(Map.size Tip) = 0
+(Map.size (Bin sz _ _ _ _)) = sz
+
+// Maybe : Some | Nothing 
+// /O(log n)/. Lookup the value at a key in the map.
+// lookup : Ord k => k -> Map k a -> Maybe a
+(Map.lookup k Tip) = Nothing
+(Map.lookup k (Bin _ kx x l r)) = (Map.lookup.aux (Utils.compare k kx) k (Bin _ kx x l r))
+  (Map.lookup.aux LT k (Bin _ _ _ l _)) = (Map.lookup k l)
+  (Map.lookup.aux GT k (Bin _ _ _ _ r)) = (Map.lookup k r)
+  (Map.lookup.aux EQ k (Bin _ _ x _ _)) = (Some x)
+
+// /O(log n)/. Find the value at a key.
+// THIS WILL EXPLODE IF ELEMENT CANNOT BE FOUND
+// Consider using 'Map.lookup' when elements may not be present.
+// find : Ord k => k -> Map k a -> a
+(Map.find k Tip) = "Map.find: key not found"
+(Map.find k (Bin _ kx x l r)) = (Map.find.aux (Utils.compare k kx) k (Bin _ kx x l r))
+  (Map.find.aux LT k (Bin _ _ _ l _)) = (Map.find k l)
+  (Map.find.aux GT k (Bin _ _ _ _ r)) = (Map.find k r)
+  (Map.find.aux EQ k (Bin _ _ x _ _)) = x
+
+// /O(log n)/. Check if the key is in the map
+// elem : Ord k => k -> Map k a -> Bool
+(Map.elem k m) = (Map.elem.aux (Map.lookup k m))
+    (Map.elem.aux (Nothing)) = 0
+    (Map.elem.aux (Some x )) = 1
+
+// /O(log n)/. Insert a new key and value in the map.
+// If the key is already present in the map, the associated value is replaced with the supplied value.
+// FIXME: too many dup
+// insert : Ord k => k -> a -> Map k a -> Map k a
+(Map.insert kx x Tip) = (Map.singleton kx x)
+(Map.insert kx x (Bin sz ky y l r)) = (Map.insert.aux (Utils.compare kx ky) (Bin sz ky y l r) kx x)
+    (Map.insert.aux LT (Bin _ ky y l r) kx x) = (Map.balance ky y (Map.insert kx x l) r)
+    (Map.insert.aux GT (Bin _ ky y l r) kx x) = (Map.balance ky y l (Map.insert kx x r))
+    (Map.insert.aux EQ (Bin sz _ _ l r) kx x) = (Bin sz kx x l r)
+
+// /O(n)/. Filter all values that satisfy the predicate.
+// filter : Ord k => (a -> Bool) -> Map k a -> Map k a
+(Map.filter k p m) = (Map.filterWithKey @_ @x (p x) m)
+
+// /O(n)/. Filter all keys\/values that satisfy the predicate.
+// filterWithKey : Ord k => (k -> a -> Bool) -> Map k a -> Map k a
+(Map.filterWithKey pred Tip) = Tip
+(Map.filterWithKey pred (Bin _ kx x l r)) = (Map.filterWithKey.aux (pred kx x) pred (Bin _ kx x l r))
+  (Map.filterWithKey.aux 1 pred (Bin _ kx x l r)) = (Map.join kx x (Map.filterWithKey pred l) (Map.filterWithKey pred r))
+  (Map.filterWithKey.aux 0 pred (Bin _ _ _ l r)) = (Map.merge (Map.filterWithKey pred l) (Map.filterWithKey pred r))
+
+
+// /O(n)/. Post-order fold. The function will be applied in ascending order.
+// foldrWithKey : (k -> a -> b -> b) -> b -> Map k a -> b
+(Map.foldrWithKey f z m) = (Map.foldrWithKey.aux f z m)
+  (Map.foldrWithKey.aux f z Tip) = z
+  (Map.foldrWithKey.aux f z (Bin _ k x l r)) = (Map.foldrWithKey.aux f (f k x (Map.foldrWithKey f z r)) l)
+
+// /O(n)/ Generates an list of all key/value pairs in key ascending order
+// toList : Map k a -> [(k, a)]
+// FIXME: why this dont work with more than 2 elements? maybe foldrWithKey
+// (Map.toList m ) = (Map.foldrWithKey (@k @x @xs (Cons (Pair k x) xs)) [] m)
+
+
+(Utils.foldl f z []) = z
+(Utils.foldl f z (Cons x xs)) = (Utils.foldl f (f z x) xs)
+
+// /O(n)/ Generates an map from a list of key/value pairs.
+// fromList : [(k, a)] -> Map k a
+(Map.fromList []) = Tip
+(Map.fromList (Cons (Pair k x) xs)) = (Map.insert k x (Map.fromList xs))
+
+(TestMap) = (Map.insert 5 0 (Map.insert 4 0 (Map.insert 3 0 (Map.insert 2 0 (Map.insert 2 0 (Map.singleton 1 0))))))
+
+(PairRange 0) = []
+(PairRange n) = (Cons (Pair n 0) (PairRange (- n 1)))
+
+// (Main n) = (Map.fromList (PairRange 1))    // rewrite: 10        // memsize 23
+// (Main n) = (Map.fromList (PairRange 10))   // rewrite: 1561      // memsize 2112
+// (Main n) = (Map.fromList (PairRange 100))  // rewrite: 103960    // memsize 165933
+// (Main n) = (Map.fromList (PairRange 1000)) // rewrite: 8852805   // memsize 15628239
+(Main n) = (Map.fromList (PairRange n))
+
