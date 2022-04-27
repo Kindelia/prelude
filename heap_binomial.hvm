@@ -82,7 +82,7 @@
 // InsertTree(new: Node, pq: Heap) -> Heap
 (InsertTree new  Nil)        = (Cons new Nil)
 (InsertTree new (Cons x xs)) = (InsertTreeAux (< (Rank new) (Rank x)) new (Cons x xs))
-    (InsertTreeAux 1 new (Cons x xs)) = (Cons new (Cons x xs))
+    (InsertTreeAux 1 new  xs        ) = (Cons new xs)
     (InsertTreeAux 0 new (Cons x xs)) = (InsertTree (Link new x) xs)
 
 // Inserts a key into the heap
@@ -102,8 +102,7 @@
 // Finds the minimal element of the heap
 // Returns Maybe.none if the heap is empty
 // FindMin(pq: Heap<Key>) -> Maybe<Key>
-(FindMin Nil)          = Maybe.none
-(FindMin (Cons t Nil)) = (Maybe.some (Root t))
+(FindMin  Nil)         = Maybe.none
 (FindMin (Cons t ts))  = (Maybe.some (FindMinAux ts (Root t)))
     (FindMinAux  Nil        n) = n
     (FindMinAux (Cons t ts) n) =
