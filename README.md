@@ -2,10 +2,11 @@
 
 To complete
 [HVM](https://github.com/Kindelia/HVM)
-development we need to decide wich purely functional data structures are going to be used on Kindelia
+development we need to decide which purely functional data structures are going to be used on Kindelia
 to handle access information on memory.
 
 The image below represents partially what we are interested in:
+
 ![](https://www.lavivienpost.com/wp-content/uploads/2021/02/data-structures-and-java-apis2.jpg)
 
 To decide the best methods, we need to implement different algorithms of data structures and compare the number of "rewrites" and "memory" wasted.
