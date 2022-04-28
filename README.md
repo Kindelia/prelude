@@ -10,8 +10,7 @@ The image below represents partially what we are interested in:
 
 A great source of functional algorithms with examples is the
 [Okasaki Book](https://br1lib.org/book/502927/5b4598)
-( [other links](https://br1lib.org/s/PRUTELY%20FUNCTIONAL%20DATA%20STRUCTURES%20OSAKI) )
-, and 
+([other links](https://br1lib.org/s/PRUTELY%20FUNCTIONAL%20DATA%20STRUCTURES%20OSAKI)), and 
 [this list of links](https://cstheory.stackexchange.com/questions/1539/whats-new-in-purely-functional-data-structures-since-okasaki).
 
 There is a 
@@ -21,9 +20,10 @@ based on this
 [paper](https://ittc.ku.edu/~andygill/papers/IntMap98.pdf).
 
 There isn't a language since it's been built from zero, and it's not necessary on functional programing.
+
 Anyway, there are some functions which are been used repeatedly, 
 maybe you can find more about then on 
-[kind repository](https://github.com/Kindelia/Kind/tree/master/base)
+[kind repository](https://github.com/Kindelia/Kind/tree/master/base).
 
 ## List of implementations
 
