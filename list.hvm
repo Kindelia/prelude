@@ -136,27 +136,14 @@
     (MaximumAux 1 x1 x2 xs) = (Maximum (Cons x1 xs))
     (MaximumAux 0 x1 x2 xs) = (Maximum (Cons x2 xs))
 
-(Maximum1 Nil)          = (Error.emptylist)
-(Maximum1 (Cons x Nil)) = x
-(Maximum1 (Cons x xs))  = 
-    let maxxs = (Maximum1 xs)
-    (MaximumAux1 (> x maxxs) x maxxs)
-        (MaximumAux1 1 x maxxs) = x
-        (MaximumAux1 0 x maxxs) = maxxs
-
 (Minimum Nil)                    = (Error.emptylist)
 (Minimum (Cons x Nil))           = x
 (Minimum (Cons x1 (Cons x2 xs))) = (MinimumAux (< x1 x2) x1 x2 xs)
     (MinimumAux 1 x1 x2 xs) = (Minimum (Cons x1 xs))
     (MinimumAux 0 x1 x2 xs) = (Minimum (Cons x2 xs))
 
-(Minimum1 Nil)          = (Error.emptylist)
-(Minimum1 (Cons x Nil)) = x
-(Minimum1 (Cons x xs))  = 
-    let minxs = (Minimum xs)
-    (Minimum1Aux (< x minxs) x minxs)
-        (Minimum1Aux 1 x minxs) = x
-        (Minimum1Aux 0 x minxs) = minxs
+
+
 
 
 
