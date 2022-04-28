@@ -30,13 +30,13 @@ maybe you can find more about then on
 ## List of implementations
 
 ### Okasaki
-* Lists (done)
+* ~~Lists (done)~~
 * Binary Search Trees (Miguel)
 * Leftist Heaps
-* Red-Black Trees (done)
+* ~~Red-Black Trees (done)~~
 * Streams
 * Queues (Daniel e Lucas)
-* Binomial Heaps (done)
+* ~~Binomial Heaps (done)~~
 * Splay Heaps
 * Pairing Heaps
 
@@ -64,7 +64,7 @@ maybe you can find more about then on
 
 
 ### StackExchange
-* IntMap (done)
+* ~~IntMap (done)~~
 * Finger Trees (Santi)
 * Ideal Hash Trees
 * Priority Search Queues
@@ -79,6 +79,8 @@ maybe you can find more about then on
 ### Others
 * [Data-List](https://hackage.haskell.org/package/base-4.16.1.0/docs/Data-List.html) (Igor)
 * Biased Search Trees (Guilherme)
+* ~~[Patricia Tree](https://ittc.ku.edu/~andygill/papers/IntMap98.pdf) (done)~~
+* ~~List zipper (done)~~
 
 
 
