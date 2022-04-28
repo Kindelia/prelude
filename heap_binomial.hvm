@@ -80,7 +80,7 @@
     (Heap.link.aux 0 n1 (Node r2 x2 c2)) = (Node (+ r2 1) x2 (Cons n1 c2))
 
 // Inserts a Tree into the heap
-// P.S.: Not to be used by itself, you could break the heap structure
+// P.S.: Do not call it manually, you could break the heap structure
 // InsertTree(new: Node, pq: Heap) -> Heap
 (InsertTree new  Nil)        = (Cons new Nil)
 (InsertTree new (Cons x xs)) = (InsertTree.aux (< (Node.rank new) (Node.rank x)) new (Cons x xs))
@@ -89,7 +89,7 @@
 
 // Inserts a key into the heap
 // It does so by creating a Node with the key and calling InsertTree
-// Insert(x: Key, pq: Heap) -> Heap
+// Insert(x: Key, pq: Heap<Key>) -> Heap<Key>
 (Heap.insert x pq) = (InsertTree (Node 0 x Nil) pq)
 
 // Merge together two heaps
@@ -119,7 +119,7 @@
 
 // Removes the minimal element of the heap
 // Returns an empty heap if the heap is already empty
-// DeleteMin(pq: Heap<Key>) -> Heap<Key>
+// DeleteMin(pq: Heap) -> Heap
 (Heap.deleteMin Nil) = Nil
 (Heap.deleteMin pq)  =
     let get_min = (Heap.getMin pq)
@@ -143,7 +143,7 @@
     (Pair rec_node (Cons x rec_pq))
 
 // Creates a heap using a list of natural numbers
-// ListToHeap(xs: List<Key>) -> Heap<Key>
+// Heap.fromList(xs: List<Key>) -> Heap<Key>
 (Heap.fromList xs) = (Heap.fromList.aux xs Nil)
     (Heap.fromList.aux  Nil        pq) = pq
     (Heap.fromList.aux (Cons x xs) pq) = (Heap.fromList.aux xs (Heap.insert x pq))
@@ -156,11 +156,11 @@
     let heap3 = (Heap.fromList [0,13,14,15,16,17])
     let heapmaster = (Heap.merge heap3 (Heap.merge heap1 heap2))
 
-    // Testing Constructors
+    // Testing Constructors/Functions
     // heap2
-    // heapmaster
+    heapmaster
     // (Heap.findMin heapmaster)
-    (Heap.deleteMin heapmaster)
+    // (Heap.deleteMin heapmaster)
 
     // "Benchmarking"
     // (Heap.fromList (DecRange 10))     // 572 RW,      723 Mem Size
@@ -173,3 +173,4 @@
 
     // General use
     // (Heap.fromList (DecRange n))
+    // (Heap.findMin (Heap.fromList (DecRange n)))
