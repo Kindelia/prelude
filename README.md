@@ -7,7 +7,9 @@ to handle access information on memory.
 
 The image below represents partially what we are interested in:
 
-![](https://www.lavivienpost.com/wp-content/uploads/2021/02/data-structures-and-java-apis2.jpg)
+<p align="center">
+	<img src="https://i.imgur.com/AoVinac.jpeg">
+</p>
 
 To decide the best methods, we need to implement different algorithms of data structures and compare the number of "rewrites" and "memory" wasted.
 
@@ -78,10 +80,7 @@ maybe you can find more about then on
 * RRB-Trees: Efficient Immutable Vectors
 
 ### Others
-* [Data-List](https://hackage.haskell.org/package/base-4.16.1.0/docs/Data-List.html) (Igor)
+* [Data List](https://hackage.haskell.org/package/base-4.16.1.0/docs/Data-List.html) (Igor)
 * Biased Search Trees (Guilherme)
 * ~~[Patricia Tree](https://ittc.ku.edu/~andygill/papers/IntMap98.pdf) (done)~~
-* ~~List zipper (done)~~
-
-
-
+* ~~List Zipper (done)~~
