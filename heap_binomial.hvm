@@ -1,6 +1,6 @@
 //* Binomial Heap
 
-// A Binomial Heap is represented as list of tree nodes
+// A Binomial Heap is represented as a list of tree nodes, ordered crescently on rank
 
 // A tree node of a Binomial Heap is composed of:
 //   - Its rank, which determines its size and how many children it has;
@@ -45,10 +45,10 @@
 (Pair.snd (Pair _ snd)) = snd
 
 // Decides if x is Greater, Lesser, or Equal to y
-(Battleship x y) = (BattleshipAux (< x y) (> x y))
-    (BattleshipAux 1 _) = Lesser
-    (BattleshipAux 0 1) = Greater
-    (BattleshipAux 0 0) = Equal
+(Battleship x y) = (Battleship.aux (< x y) (> x y))
+    (Battleship.aux 1 _) = Lesser
+    (Battleship.aux 0 1) = Greater
+    (Battleship.aux 0 0) = Equal
 
 // Decreasing Range:
 // Creates a range from n-1 to 0
@@ -163,10 +163,10 @@
     // (Heap.deleteMin heapmaster)
 
     // "Benchmarking"
-    // (Heap.fromList (DecRange 10))     // 572 RW,      723 Mem Size
-    // (Heap.fromList (DecRange 100))    // 13844 RW,    15816 Mem Size
-    // (Heap.fromList (DecRange 1000))   // 230627 RW,   267046 Mem Size
-    // (Heap.fromList (DecRange 10000))  // 3969306 RW,  4663518 Mem Size
+    // (Heap.fromList (DecRange 10))     //      572 RW,      723 Mem Size
+    // (Heap.fromList (DecRange 100))    //    13844 RW,    15816 Mem Size
+    // (Heap.fromList (DecRange 1000))   //   230627 RW,   267046 Mem Size
+    // (Heap.fromList (DecRange 10000))  //  3969306 RW,  4663518 Mem Size
     // (Heap.fromList (DecRange 100000)) // 56346413 RW, 66616128 Mem Size
     // Expected complexity for Heap.fromList is O(n*log(n)), because it calls Insertion (O(log n)) n times.
     // As such, having the rewrites increase 20x when incresing the input 10x makes sense
