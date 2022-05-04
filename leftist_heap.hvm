@@ -1,0 +1,31 @@
+// Leftist Heap implementation based on Okasaki's book
+
+// Leftist heaps are data structures which ...
+
+
+// Incompleta
+(Merge h Empty) = h
+(Merge Empty h) = h
+(Merge (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MergeAux (<= x y) (Tree _ x a1 b1) (Tree _ y a2 b2))
+    (MergeAux True (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT x a1 (Merge b1 (Tree _ y a2 b2)))
+    (MergeAux False (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT y a2 (Merge (Tree _ x a1 b1) b2))
+
+// Incompleta
+(Rank Empty) = 0
+(Rank (Tree r _ _ _)) r
+
+// Incompleta
+(MakeT x a b) = (MakeTAux (>= (Rank a) (Rank b)) x a b)
+    (MakeTAux True  x a b) = (Tree (+ (Rank b) 1) x a b)
+    (MakeTAux False x a b) = (Tree (+ (Rank a) 1) x b a)
+
+// Incompleta
+(Insert x h) = (Merge (Tree 1 x Empty Empty) h)
+
+// Incompleta
+(FindMin (Tree _ x a b)) = x
+
+// Incompleta
+(DeleteMin (Tree _ x a b)) = (Merge a b)
+
+(Main) = 
