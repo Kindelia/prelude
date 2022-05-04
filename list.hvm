@@ -1,0 +1,463 @@
+// https://hackage.haskell.org/package/base-4.16.1.0/docs/Data-List.html
+
+// BASIC FUCTIONS
+
+(Concat Nil         ys) = ys
+(Concat (Cons x xs) ys) = (Cons x (Concat xs ys))
+
+(Head Nil)        = (Error.emptylist)
+(Head (Cons x _)) = x
+
+(Last Nil)          = (Error.emptylist)
+(Last (Cons x Nil)) = x
+(Last (Cons x xs))  = (Last xs)
+
+(Tail Nil)         = (Error.emptylist)
+(Tail (Cons _ xs)) = xs
+
+(Init Nil)          = (Error.emptylist)
+(Init (Cons x Nil)) = (Nil)
+(Init (Cons x xs))  = (Cons x (Init xs))
+
+(Uncons Nil)         = (None)
+(Uncons (Cons x xs)) = (Some (Pair x xs))
+
+(Singleton x) = (Cons x Nil)
+
+(Null Nil)         = 1
+(Null (Cons x xs)) = 0
+
+(Length Nil)         = 0
+(Length (Cons x xs)) = (+ (Length xs) 1)
+
+
+
+
+
+
+
+// LIST TRANSFORMATIONS
+
+(Map _ Nil)         = (Nil)
+(Map f (Cons x xs)) = (Cons (f x) (Map f xs))
+
+(Reverse xs) = (ReverseAux xs Nil)
+    (ReverseAux Nil        ys)  = ys
+    (ReverseAux (Cons x xs) ys) = (ReverseAux xs (Cons x ys))
+
+(Intersperse _ Nil)          = (Nil)
+(Intersperse s (Cons x ys))  = (Cons x (PrependToAll s ys))
+
+// Aux
+(PrependToAll _ Nil) = (Nil)
+(PrependToAll s (Cons x xs)) = (Cons s (Cons x (PrependToAll s xs)))
+
+(Intercalate xs xss) = (Concat (Intersperse xs xss))
+
+// TODO: Make transpose work for lists with different lengths
+(Transpose (Cons Nil _)) = (Nil)
+(Transpose (Cons x xs))  = (Cons (Map @y(Head y) (Cons x xs)) (Transpose (Map @y(Tail y) (Cons x xs))))
+
+(Subsequences xs) = (Cons Nil (NonEmptySubsequences xs))
+    (NonEmptySubsequences Nil)         = (Nil)
+    (NonEmptySubsequences (Cons x xs)) = (Cons (Cons x Nil) (Foldr @ys@r((Cons ys (Cons (Cons x ys) r))) Nil (NonEmptySubsequences xs)))
+
+// TODO: Permutations
+
+
+
+
+
+
+
+// REDUCING LISTS (FOLDS)
+
+(Foldl _ n Nil)         = n
+(Foldl f n (Cons x xs)) = (Foldl f (f n x) xs)  
+
+// TODO: Foldl'
+
+(Foldl1 _ Nil)         = (Error.emptylist)
+(Foldl1 f (Cons x xs)) = (Foldl f x xs)
+
+// TODO: Foldl1'
+
+(Foldr _ n Nil)         = n
+(Foldr f n (Cons x xs)) = (f x (Foldr f n xs))
+
+(Foldr1 _ Nil)         = (Error.emptylist)
+(Foldr1 f (Cons x xs)) = (Foldr f x xs)
+
+
+
+
+
+
+
+
+
+// SPECIAL FOLDS
+
+(Flatten Nil)         = (Nil)
+(Flatten (Cons x xs)) = (Concat x (Flatten xs))
+
+// TODO: ConcatMap
+
+(And Nil)         = 1
+(And (Cons x xs)) = (AndAux x xs)
+    (AndAux 1 xs) = (And xs)
+    (AndAux 0 xs) = 0
+
+(Or Nil)         = 0
+(Or (Cons x xs)) = (OrAux x xs)
+    (OrAux 1 xs) = 1
+    (OrAux 0 xs) = (Or xs)
+
+(Any _ Nil)         = 0
+(Any p (Cons x xs)) = (AnyAux (p x) p x xs)
+    (AnyAux 1 p x xs) = 1
+    (AnyAux 0 p x xs) = (Any p xs)
+
+(All _ Nil)         = 1
+(All p (Cons x xs)) = (AllAux (p x) p x xs)
+    (AllAux 1 p x xs) = (All p xs)
+    (AllAux 0 p x xs) = 0
+
+
+(Sum Nil)         = 0
+(Sum (Cons x xs)) = (+ x (Sum xs))
+
+(Product Nil)         = 1
+(Product (Cons x xs)) = (* x (Product xs))
+
+(Maximum Nil)                    = (Error.emptylist)
+(Maximum (Cons x Nil))           = x
+(Maximum (Cons x1 (Cons x2 xs))) = (MaximumAux (> x1 x2) x1 x2 xs)
+    (MaximumAux 1 x1 x2 xs) = (Maximum (Cons x1 xs))
+    (MaximumAux 0 x1 x2 xs) = (Maximum (Cons x2 xs))
+
+(Minimum Nil)                    = (Error.emptylist)
+(Minimum (Cons x Nil))           = x
+(Minimum (Cons x1 (Cons x2 xs))) = (MinimumAux (< x1 x2) x1 x2 xs)
+    (MinimumAux 1 x1 x2 xs) = (Minimum (Cons x1 xs))
+    (MinimumAux 0 x1 x2 xs) = (Minimum (Cons x2 xs))
+
+
+
+
+
+
+// SCANS
+(Scanl _ q Nil)         = (Cons q Nil)
+(Scanl f q (Cons x xs)) = (Cons q (Scanl f (f q x) xs))  
+
+// TODO: Scanl'
+
+(Scanl1 _ Nil)         = (Nil)
+(Scanl1 f (Cons x xs)) = (Scanl f x xs)
+
+// TODO: Scanr
+
+// TODO: Scanr1
+
+
+
+
+
+
+
+// TODO: ACUMMULATING MAPS
+
+
+
+
+
+
+
+// TODO: INFINITE LISTS
+
+
+
+
+
+
+
+// TODO: UNFOLDING
+
+
+
+
+
+
+
+// EXTRACTING SUBLISTS
+
+(Take 0 xs)          = (Nil)
+(Take _ Nil)         = (Nil)
+(Take n (Cons x xs)) = (Cons x (Take (- n 1) xs))
+
+(Drop 0 xs)          = xs
+(Drop _ Nil)         = (Nil)
+(Drop n (Cons x xs)) = (Drop (- n 1) xs)
+
+(SplitAt n xs) = (Pair (Take n xs) (Drop n xs))
+
+(TakeWhile _ Nil)         = (Nil)
+(TakeWhile p (Cons x xs)) = (TakeWhileAux (p x) p x xs)
+    (TakeWhileAux 1 p x xs) = (Cons x (TakeWhile p xs))
+    (TakeWhileAux 0 p x xs) = (Nil)
+
+(DropWhile _ Nil)         = (Nil)
+(DropWhile p (Cons x xs)) = (DropWhileAux (p x) p x xs)
+    (DropWhileAux 1 p x xs) = (DropWhile p xs)
+    (DropWhileAux 0 p x xs) = (Cons x xs) 
+
+// TODO: DropWhileEnd
+
+(Span p xs)  = (Pair (TakeWhile p xs) (DropWhile p xs))
+
+// TODO: Break 
+
+(StripPrefix Nil         ys)          = (Some ys)
+(StripPrefix _           Nil)         = (None)
+(StripPrefix (Cons x xs) (Cons y ys)) = (StripPrefixAux (== x y) x xs y ys)
+    (StripPrefixAux 1 x xs y ys) = (StripPrefix xs ys)
+    (StripPrefixAux 0 x xs y ys) = (None)
+
+// TODO: Group
+
+(Inits xs) = (Reverse (InitsAux xs))
+    (InitsAux Nil) = (Cons Nil Nil)
+    (InitsAux xs) = (Cons xs (InitsAux (Init xs)))
+
+(Tails Nil)         = (Cons Nil Nil)
+(Tails (Cons x xs)) = (Cons (Cons x xs) (Tails xs))
+
+
+
+
+
+
+
+// PREDICATES
+
+(IsPrefixOf Nil         _)           = 1
+(IsPrefixOf _           Nil)         = 0
+(IsPrefixOf (Cons x xs) (Cons y ys)) = (& (== x y) (IsPrefixOf xs ys))
+
+// TODO: IsSuffixOf
+
+// TODO: IsInfixOf
+
+(IsSubsequenceOf Nil _)   = 1
+(IsSubsequenceOf _   Nil) = 0
+(IsSubsequenceOf (Cons x xs) (Cons y ys)) = (IsSubsequenceOfAux (== x y) x xs y ys)
+    (IsSubsequenceOfAux 1 x xs y ys) = (IsSubsequenceOf xs ys)
+    (IsSubsequenceOfAux 0 x xs y ys) = (IsSubsequenceOf (Cons x xs) ys)
+
+
+
+
+
+
+
+// SEARCHING BY EQUALITY
+
+(Elem _ Nil)         = 0
+(Elem e (Cons x xs)) = (ElemAux (== e x) e x xs)
+    (ElemAux 1 e x xs) = 1
+    (ElemAux 0 e x xs) = (Elem e xs)
+
+(NotElem _ Nil)         = 1
+(NotElem e (Cons x xs)) = (NotElemAux (== e x) e x xs)
+    (NotElemAux 1 e x xs) = 0
+    (NotElemAux 0 e x xs) = (NotElem e xs)
+
+(Lookup key Nil)                  = (None)
+(Lookup key (Cons (Pair a b) xs)) = (LookupAux (== key a) key a b xs)
+    (LookupAux 1 key a b xs) = (Some b)
+    (LookupAux 0 key a b xs) = (Lookup key xs)
+
+
+
+
+
+
+
+// SEARCHING WITH A PREDICATE
+
+(Find p Nil)         = (None)
+(Find p (Cons x xs)) = (FindAux (p x) p x xs)
+    (FindAux 1 p x xs) = (Some x)
+    (FindAux 0 p x xs) = (Find p xs)
+
+(Filter p Nil)         = (Nil)
+(Filter p (Cons x xs)) = (FilterAux (p x) p x xs)
+    (FilterAux 1 p x xs) = (Cons x (Filter p xs))
+    (FilterAux 0 p x xs) = (Filter p xs)
+
+// Testar usar lambda list
+(Partition p xs) = (PartitionAux0 p xs (Pair Nil Nil))
+    (PartitionAux0 p Nil (Pair t f)) = (Pair (Reverse t) (Reverse f))
+    (PartitionAux0 p (Cons x xs) acc) = (PartitionAux1 (p x) p x xs acc)
+        (PartitionAux1 1 p x xs (Pair t f)) = (PartitionAux0 p xs (Pair (Cons x t) f))
+        (PartitionAux1 0 p x xs (Pair t f)) = (PartitionAux0 p xs (Pair t (Cons x f)))
+
+
+
+
+
+
+
+// INDEXING LISTS
+
+(Index _ Nil)         = (Error.indexTooLarge)
+(Index 0 (Cons x xs)) = x
+(Index i (Cons x xs)) = (Index (- i 1) xs)
+
+(ElemIndex e xs) = (ElemIndexAux0 0 e xs)
+    (ElemIndexAux0 _ _ Nil)         = (None)
+    (ElemIndexAux0 i e (Cons x xs)) = (ElemIndexAux1 (== e x) i e x xs)
+        (ElemIndexAux1 1 i e x xs) = (Some i)
+        (ElemIndexAux1 0 i e x xs) = (ElemIndexAux0 (+ i 1) e xs)
+
+(ElemIndices e xs) = (ElemIndicesAux0 0 e xs)
+    (ElemIndicesAux0 _ _ Nil)         = (Nil)
+    (ElemIndicesAux0 i e (Cons x xs)) = (ElemIndicesAux1 (== e x) i e x xs)
+        (ElemIndicesAux1 1 i e x xs) = (Cons i (ElemIndicesAux0 (+ i 1) e xs))
+        (ElemIndicesAux1 0 i e x xs) = (ElemIndicesAux0 (+ i 1) e xs)
+
+(FindIndex p xs) = (FindIndexAux0 0 p xs)    
+    (FindIndexAux0 _ _ Nil)         = (None)
+    (FindIndexAux0 i p (Cons x xs)) = (FindIndexAux1 (p x) i p x xs)
+        (FindIndexAux1 1 i p x xs) = (Some i)
+        (FindIndexAux1 0 i p x xs) = (FindIndexAux0 (+ i 1) p xs) 
+
+(FindIndices p xs) = (FindIndicesAux0 0 p xs)    
+    (FindIndicesAux0 _ _ Nil)         = (Nil)
+    (FindIndicesAux0 i p (Cons x xs)) = (FindIndicesAux1 (p x) i p x xs)
+        (FindIndicesAux1 1 i p x xs) = (Cons i (FindIndicesAux0 (+ i 1) p xs))
+        (FindIndicesAux1 0 i p x xs) = (FindIndicesAux0 (+ i 1) p xs) 
+
+
+
+
+
+
+
+
+
+
+
+// Zipping and unzipping lists
+
+(Zip Nil         y)           = Nil
+(Zip x           Nil)         = Nil
+(Zip (Cons x xs) (Cons y ys)) = ((Cons (Pair x y) (Zip xs ys)))
+
+(Zip3 Nil         y           z)           = (Nil)
+(Zip3 x           Nil         z)           = (Nil)
+(Zip3 x           y           Nil)         = (Nil)
+(Zip3 (Cons x xs) (Cons y ys) (Cons z zs)) = ((Cons (Tuple3 x y z) (Zip3 xs ys zs)))     
+
+(ZipWith _ _           Nil)          = (Nil)
+(ZipWith _ Nil         _)            = (Nil)
+(ZipWith f (Cons x xs) (Cons y ys))  = (Cons (f x y) (ZipWith f xs ys))
+
+(ZipWith3 _ _           _           Nil)         = (Nil)
+(ZipWith3 _ _           Nil         _)           = (Nil)
+(ZipWith3 _ Nil         _           _)           = (Nil)
+(ZipWith3 f (Cons x xs) (Cons y ys) (Cons z zs)) = (Cons (f x y z) (ZipWith3 f xs ys zs))
+
+(Unzip Nil)                  = (Pair Nil Nil)
+(Unzip (Cons (Pair a b) xs)) = (Pair (Cons a (UnzipAuxA xs)) (Cons b (UnzipAuxB xs)))
+    (UnzipAuxA Nil)                  = (Nil)
+    (UnzipAuxA (Cons (Pair a b) xs)) = (Cons a (UnzipAuxA xs))
+    (UnzipAuxB Nil)                  = (Nil)
+    (UnzipAuxB (Cons (Pair a b) xs)) = (Cons b (UnzipAuxB xs))
+
+(Unzip3 Nil)                      = (Tuple3 Nil Nil Nil)
+(Unzip3 (Cons (Tuple3 a b c) xs)) = (Tuple3 (Cons a (Unzip3AuxA xs)) (Cons b (Unzip3AuxB xs)) (Cons c (Unzip3AuxC xs)))
+    (Unzip3AuxA Nil)                      = (Nil)
+    (Unzip3AuxA (Cons (Tuple3 a b c) xs)) = (Cons a (Unzip3AuxA xs))
+    (Unzip3AuxB Nil)                      = (Nil)
+    (Unzip3AuxB (Cons (Tuple3 a b c) xs)) = (Cons b (Unzip3AuxB xs))
+    (Unzip3AuxC Nil)                      = (Nil)
+    (Unzip3AuxC (Cons (Tuple3 a b c) xs)) = (Cons c (Unzip3AuxC xs))
+
+//TODO: Zip4-7, ZipWith4-7, Unzip4-7
+
+
+
+
+
+
+
+// TODO: FUNCTIONS ON STRINGS
+
+
+
+
+
+
+
+// SET OPERATIONS
+
+// TODO: nub
+
+(Delete _ Nil) = (Nil)
+(Delete e (Cons x xs)) = (DeleteAux (== e x) e x xs)
+    (DeleteAux 1 e x xs) = xs
+    (DeleteAux 0 e x xs) = (Cons x (Delete e xs))
+
+// TODO: (\\)
+
+// Aux
+(Snoc x Nil)         = (Cons x Nil)
+(Snoc x (Cons y ys)) = (Cons y (Snoc x ys))
+
+(Union Nil Nil)         = Nil
+(Union xs  Nil)         = xs
+(Union xs  (Cons y ys)) = (UnionAux (Elem y xs) xs y ys)
+    (UnionAux 1 xs y ys) = (Union xs ys)
+    (UnionAux 0 xs y ys) = (Union (Snoc y xs) ys)
+
+(Intersect Nil         _)   = (Nil)
+(Intersect xs          Nil) = xs
+(Intersect (Cons x xs) ys)  = (IntersectAux (Elem x ys) x xs ys)
+    (IntersectAux 1 x xs ys) = (Cons x (Intersect xs ys))
+    (IntersectAux 0 x xs ys) = (Intersect xs ys)
+
+
+
+
+
+
+
+// ORDERED LISTS
+
+// TODO: Sort
+
+// TODO: SortOn
+
+(Insert e Nil)         = (Cons e Nil)
+(Insert e (Cons x xs)) = (InsertAux (> e x) e x xs)
+    (InsertAux 1 e x xs) = (Cons x (Insert e xs))
+    (InsertAux 0 e x xs) = (Cons e (Cons x xs))
+
+
+
+
+
+
+
+// TODO: GENERALIZED FUNCTIONS
+
+
+
+
+
+
+
+(Main n) = 
+    (Scanl1 @x@y(+ x y) [1,2,3,4])
