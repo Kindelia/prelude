@@ -35,7 +35,7 @@ maybe you can find more about then on
 ### Okasaki
 * ~~Lists (done)~~
 * Binary Search Trees (Miguel)
-* Leftist Heaps
+* Leftist Heaps (Guilherme)
 * ~~Red-Black Trees (done)~~
 * Streams
 * Queues (Daniel e Lucas)
@@ -81,6 +81,6 @@ maybe you can find more about then on
 
 ### Others
 * [Data List](https://hackage.haskell.org/package/base-4.16.1.0/docs/Data-List.html) (Igor)
-* Biased Search Trees (Guilherme)
+* Biased Search Trees (Guilherme, but if anyone wants to work on it, go ahead)
 * ~~[Patricia Tree](https://ittc.ku.edu/~andygill/papers/IntMap98.pdf) (done)~~
 * ~~List Zipper (done)~~
