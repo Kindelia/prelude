@@ -1,34 +1,38 @@
-// Binomial Heap
-//
-// A Binomial Heap is represented as list of tree nodes
-//
+//* Binomial Heap
+
+// A Binomial Heap is represented as a list of tree nodes, ordered crescently on rank
+
 // A tree node of a Binomial Heap is composed of:
 //   - Its rank, which determines its size and how many children it has;
 //   - Its root value, which is lower than the values from its children (The min-heap property);
 //   - Its children, represented as a list of tree nodes.
-//
-// Type definitions:
+
+// Based on Chris Okasaki's "Purely Functional Data Structures", Chapter 6.2.2 - 1996
+
+//* Type definitions:
 // type List<A: Type> {
-//     List.nil
-//     List.cons(head: A, tail: List<A>)
+//     List.Nil
+//     List.Cons(head: A, tail: List<A>)
 // }
-//
+
 // type Node<Key: Type> {
 //     (rank: Nat, root: Key, children: List<Node<Key>>)
 // }
-//
+
 // type Heap<Key> = List<Node<Key>>
-//
+
 // type Maybe<A: Type> {
-//     none
-//     some(value: A)
+//     Maybe.None
+//     Maybe.Some(value: A)
 // }
-//
+
 // type Pair<A: Type, B: Type> {
 //    (fst: A, snd: B)
 // }
 
-// Helper Functions
+
+//* Helper Functions
+
 (Nat.min x y) = (Nat.min.aux (<= x y) x y)
     (Nat.min.aux 1 x y) = x
     (Nat.min.aux 0 x y) = y
@@ -40,101 +44,133 @@
 (Pair.fst (Pair fst _)) = fst
 (Pair.snd (Pair _ snd)) = snd
 
-// Retorna se x é maior, menor ou igual, a y
-(Battleship x y) = (BattleshipAux (< x y) (> x y))
-    (BattleshipAux 1 _) = Lesser
-    (BattleshipAux 0 1) = Greater
-    (BattleshipAux 0 0) = Equal
+// Decides if x is Greater, Lesser, or Equal to y
+(Battleship x y) = (Battleship.aux (< x y) (> x y))
+    (Battleship.aux 1 _) = Lesser
+    (Battleship.aux 0 1) = Greater
+    (Battleship.aux 0 0) = Equal
 
-// "Getters"
+// Decreasing Range:
+// Creates a range from n-1 to 0
+(DecRange 0) = Nil
+(DecRange n) =
+    let dec = (- n 1)
+    (Cons dec (DecRange dec))
+
+
+//* "Getters"
+
 // Rank(n: Node<Key>) -> Nat
-(Rank (Node rank root children)) = rank
+(Node.rank (Node rank root children)) = rank
 // Root(n: Node<Key>) -> Key
-(Root (Node rank root children)) = root
+(Node.root (Node rank root children)) = root
 // Children(n: Node<Key>) -> Heap<Key>
-(Children (Node rank root children)) = children
+(Node.children (Node rank root children)) = children
+
+
+//* Heap Functions
 
 // Links together two trees with the same rank
 // The tree returned will be the tree with smaller root with:
 //   - the other tree as one of its children
 //   - its rank increased by 1
 // Link(n1: Node, n2: Node) -> Node
-(Link n1 n2) = (LinkAux (<= (Root n1) (Root n2)) n1 n2)
-    (LinkAux 1 (Node r1 x1 c1) n2) = (Node (+ r1 1) x1 (Cons n2 c1))
-    (LinkAux 0 n1 (Node r2 x2 c2)) = (Node (+ r2 1) x2 (Cons n1 c2))
+(Heap.link n1 n2) = (Heap.link.aux (<= (Node.root n1) (Node.root n2)) n1 n2)
+    (Heap.link.aux 1 (Node r1 x1 c1) n2) = (Node (+ r1 1) x1 (Cons n2 c1))
+    (Heap.link.aux 0 n1 (Node r2 x2 c2)) = (Node (+ r2 1) x2 (Cons n1 c2))
 
 // Inserts a Tree into the heap
-// P.S.: Not to be used by itself, you could break the heap structure
+// P.S.: Do not call it manually, you could break the heap structure
 // InsertTree(new: Node, pq: Heap) -> Heap
 (InsertTree new  Nil)        = (Cons new Nil)
-(InsertTree new (Cons x xs)) = (InsertTreeAux (< (Rank new) (Rank x)) new (Cons x xs))
-    (InsertTreeAux 1 new (Cons x xs)) = (Cons new (Cons x xs))
-    (InsertTreeAux 0 new (Cons x xs)) = (InsertTree (Link new x) xs)
+(InsertTree new (Cons x xs)) = (InsertTree.aux (< (Node.rank new) (Node.rank x)) new (Cons x xs))
+    (InsertTree.aux 1 new  xs        ) = (Cons new xs)
+    (InsertTree.aux 0 new (Cons x xs)) = (InsertTree (Heap.link new x) xs)
 
 // Inserts a key into the heap
 // It does so by creating a Node with the key and calling InsertTree
-// Insert(x: Key, pq: Heap) -> Heap
-(Insert x pq) = (InsertTree (Node 0 x Nil) pq)
+// Insert(x: Key, pq: Heap<Key>) -> Heap<Key>
+(Heap.insert x pq) = (InsertTree (Node 0 x Nil) pq)
 
 // Merge together two heaps
 // Merge(pq1: Heap, pq2: Heap) -> Heap
-(Merge pq Nil) = pq
-(Merge Nil pq) = pq
-(Merge (Cons x xs) (Cons y ys)) = (MergeAux (Battleship (Rank x) (Rank y)) (Cons x xs) (Cons y ys))
-    (MergeAux Lesser  (Cons x xs) (Cons y ys)) = (Cons x (Merge xs (Cons y ys)))
-    (MergeAux Greater (Cons x xs) (Cons y ys)) = (Cons y (Merge (Cons x xs) ys))
-    (MergeAux Equal   (Cons x xs) (Cons y ys)) = (InsertTree (Link x y) (Merge xs ys))
+(Heap.merge pq Nil) = pq
+(Heap.merge Nil pq) = pq
+(Heap.merge (Cons x xs) (Cons y ys)) =
+    (Heap.merge.aux
+        (Battleship (Node.rank x) (Node.rank y))
+        (Cons x xs)
+        (Cons y ys)
+    )
+
+(Heap.merge.aux Lesser  (Cons x xs) (Cons y ys)) = (Cons x (Heap.merge xs (Cons y ys)))
+(Heap.merge.aux Greater (Cons x xs) (Cons y ys)) = (Cons y (Heap.merge (Cons x xs) ys))
+(Heap.merge.aux Equal   (Cons x xs) (Cons y ys)) = (InsertTree (Heap.link x y) (Heap.merge xs ys))
 
 // Finds the minimal element of the heap
 // Returns Maybe.none if the heap is empty
 // FindMin(pq: Heap<Key>) -> Maybe<Key>
-(FindMin Nil)          = Maybe.none
-(FindMin (Cons t Nil)) = (Maybe.some (Root t))
-(FindMin (Cons t ts))  = (Maybe.some (FindMinAux ts (Root t)))
-    (FindMinAux  Nil        n) = n
-    (FindMinAux (Cons t ts) n) =
-        let min = (Nat.min n (Root t))
-        (FindMinAux ts min)
+(Heap.findMin  Nil)         =  Maybe.None
+(Heap.findMin (Cons t ts))  = (Maybe.Some (Heap.findMin.aux ts (Node.root t)))
+    (Heap.findMin.aux  Nil        n) = n
+    (Heap.findMin.aux (Cons t ts) n) =
+        let min = (Nat.min n (Node.root t))
+        (Heap.findMin.aux ts min)
 
 // Removes the minimal element of the heap
 // Returns an empty heap if the heap is already empty
-// DeleteMin(pq: Heap<Key>) -> Heap<Key>
-(DeleteMin Nil) = Nil
-(DeleteMin pq)  =
-    let get_min = (GetMin pq)
+// DeleteMin(pq: Heap) -> Heap
+(Heap.deleteMin Nil) = Nil
+(Heap.deleteMin pq)  =
+    let get_min = (Heap.getMin pq)
     let removed = (Pair.fst get_min)
     let new_pq  = (Pair.snd get_min)
-    (Merge (List.reverse (Children removed)) new_pq)
+    (Heap.merge (List.reverse (Node.children removed)) new_pq)
 
 // Returns a pair of:
 //   - the tree with the minimal element;
 //   - the input heap without said tree;
 // GetMin(pq: Heap<Key>) -> Pair<Node<Key>,Heap<Key>>
-(GetMin (Cons x Nil)) = (Pair x Nil)
-(GetMin (Cons x xs )) =
-    let rec = (GetMin xs)
-    (GetMinAux (<= (Root x) (Root (Pair.fst rec))) (Cons x xs) rec)
+(Heap.getMin (Cons x Nil)) = (Pair x Nil)
+(Heap.getMin (Cons x xs )) =
+    let rec = (Heap.getMin xs)
+    (Heap.getMin.aux (<= (Node.root x) (Node.root (Pair.fst rec))) (Cons x xs) rec)
 
-(GetMinAux 1 (Cons x xs) rec) = (Pair x xs)
-(GetMinAux 0 (Cons x xs) rec) = 
+(Heap.getMin.aux 1 (Cons x xs) rec) = (Pair x xs)
+(Heap.getMin.aux 0 (Cons x xs) rec) = 
     let rec_node = (Pair.fst rec)
     let rec_pq = (Pair.snd rec) 
     (Pair rec_node (Cons x rec_pq))
 
 // Creates a heap using a list of natural numbers
-// ListToHeap(xs: List<Key>) -> Heap<Key>
-(ListToHeap xs) = (ListToHeapAux xs Nil)
-    (ListToHeapAux  Nil        pq) = pq
-    (ListToHeapAux (Cons x xs) pq) = (ListToHeapAux xs (Insert x pq))
+// Heap.fromList(xs: List<Key>) -> Heap<Key>
+(Heap.fromList xs) = (Heap.fromList.aux xs Nil)
+    (Heap.fromList.aux  Nil        pq) = pq
+    (Heap.fromList.aux (Cons x xs) pq) = (Heap.fromList.aux xs (Heap.insert x pq))
 
-(Main) =
-    let heap1 = (ListToHeap [1,2,3,4,5])
-    let heap2 = (ListToHeap [6,7,8,9,10,11,12])
-    let heap3 = (ListToHeap [0,13,14,15,16,17])
 
-    let heapmaster = (Merge heap3 (Merge heap1 heap2))
+(Main n) =
+    // Some vars
+    let heap1 = (Heap.fromList [1,2,3,4,5])
+    let heap2 = (Heap.fromList [6,7,8,9,10,11,12])
+    let heap3 = (Heap.fromList [0,13,14,15,16,17])
+    let heapmaster = (Heap.merge heap3 (Heap.merge heap1 heap2))
 
-    //heap2
+    // Testing Constructors/Functions
+    // heap2
     heapmaster
-    //(FindMin heapmaster)
-    //(DeleteMin heapmaster)
+    // (Heap.findMin heapmaster)
+    // (Heap.deleteMin heapmaster)
+
+    // "Benchmarking"
+    // (Heap.fromList (DecRange 10))     //      572 RW,      723 Mem Size
+    // (Heap.fromList (DecRange 100))    //    13844 RW,    15816 Mem Size
+    // (Heap.fromList (DecRange 1000))   //   230627 RW,   267046 Mem Size
+    // (Heap.fromList (DecRange 10000))  //  3969306 RW,  4663518 Mem Size
+    // (Heap.fromList (DecRange 100000)) // 56346413 RW, 66616128 Mem Size
+    // Expected complexity for Heap.fromList is O(n*log(n)), because it calls Insertion (O(log n)) n times.
+    // As such, having the rewrites increase 20x when incresing the input 10x makes sense
+
+    // General use
+    // (Heap.fromList (DecRange n))
+    // (Heap.findMin (Heap.fromList (DecRange n)))
