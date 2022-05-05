@@ -35,6 +35,8 @@ maybe you can find more about then on
 ### Okasaki
 
 * ~~Lists (done)~~
+* ~~Bottom-Up Mergesort (done)~~
+  * ~~Sortable Collections with Bottom-Up Mergesort(done)~~
 * Binary Search Trees (Miguel)
 * Leftist Heaps (Guilherme)
 * ~~Red-Black Trees (done)~~
@@ -49,7 +51,6 @@ maybe you can find more about then on
 * Lazy Pairing Heaps
 * Scheduling
 * Real-Time Queues
-* Bottom-Up Mergesort with Sharing (Daniel)
 * Batched Rebuilding
 * Global Rebuilding
 * Lazy rebuilding
