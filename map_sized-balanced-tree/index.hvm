@@ -13,6 +13,8 @@
 
 (Utils.pairApply f (Pair x y)) = (Pair (f x) (f y))
 
+(Pair.get (Pair x y) f) = (f x y)
+
 // | A Map from keys @k@ to values @a@. 
 // data Map k a = Tip 
 //              | Bin Size k a (Map k a) (Map k a) 
@@ -33,9 +35,11 @@
 
 // Maintains the correct size, assumes that both [l] and [r] are balanced with respect to each other.
 // bin : k -> a -> Map k a -> Map k a -> Map k a
-(Map.bin k x l r) = (Bin (+ (Map.size l) (+ (Map.size r) 1)) k x l r)
+(Map.bin k x l r) = 
+  (Pair.get (Map.size l) @sizeL @l_cache
+  (Pair.get (Map.size r) @sizeR @r_cache
+  (Bin (+ (+ sizeL sizeR) 1) k x l_cache r_cache)))
 
-//
 //  [Map.balance l x r] balances two trees with value x.
 //  The sizes of the trees should balance after decreasing the
 //  size of one of them. (a rotation).
@@ -65,38 +69,41 @@
 //  to decide whether a single or double rotation is needed. Although
 //  he actually proves that this ratio is needed to maintain the
 //  invariants, his implementation uses an invalid ratio of [1].
-(Map.delta) = 2
-(Map.ratio) = 1
+(Map.delta) = 4
+(Map.ratio) = 2
 
 // Restores the balance and size.
 // Assumes that the original tree was balanced and that [l] or [r] has changed by at most one element.
 // balance : k -> a -> Map k a -> Map k a -> Map k a
 (Map.balance k x l r) = 
-  let sizeL = (Map.size l)
-  let sizeR = (Map.size r)
-  let sizeX = (+ sizeL (+ sizeR 1))
-  (Map.balance.aux.0 sizeL sizeR sizeX k x l r)
+  (Pair.get (Map.size l) @sizeL @l_cache
+  (Pair.get (Map.size r) @sizeR @r_cache
+  (Map.balance.aux.0 sizeL sizeR (+ sizeL (+ sizeR 1)) k x l_cache r_cache)))
 
 (Map.balance.aux.0 sizeL sizeR sizeX k x l r) = (Map.balance.aux.1 (>= 1 (+ sizeL sizeR)) sizeL sizeR sizeX k x l r)
 (Map.balance.aux.1 1 _ _ sizeX k x l r) = (Bin sizeX k x l r)
 (Map.balance.aux.1 0 sizeL sizeR sizeX k x l r) = (Map.balance.aux.2 (>= sizeR (* Map.delta sizeL)) sizeL sizeR sizeX k x l r)
-  (Map.balance.aux.2 1 sizeL sizeR sizeX k x l r) = (Map.rotateL k x l r)
+  (Map.balance.aux.2 1 _ _ _ k x l r) = (Map.rotateL k x l r)
   (Map.balance.aux.2 0 sizeL sizeR sizeX k x l r) = (Map.balance.aux.3 (>= sizeL (* Map.delta sizeR)) sizeL sizeR sizeX k x l r)
-    (Map.balance.aux.3 1 sizeL sizeR sizeX k x l r) = (Map.rotateR k x l r)
+    (Map.balance.aux.3 1 _ _ _ k x l r) = (Map.rotateR k x l r)
     (Map.balance.aux.3 0 sizeL sizeR sizeX k x l r) = (Bin sizeX k x l r)
 
 // Rotate
-(Map.rotateL k x l r) = (Map.rotateL.aux r l k x l r)
- (Map.rotateL.aux r l k x l (Bin _ _ _ ly ry)) = (Map.rotateL.aux1 (< (Map.size ly) (* Map.ratio (Map.size ry))) k x l r)
-   (Map.rotateL.aux1 1 k x l r) = (Map.singleL k x l r)
-   (Map.rotateL.aux1 0 k x l r) = (Map.doubleL k x l r)
- (Map.rotateL.aux1 _ _ _ _ Tip) = "rotateL Tip"
+(Map.rotateL k x l (Bin sz ky xy ly ry)) = 
+  (Pair.get (Map.size ly) @sizeL @ly_cache
+  (Pair.get (Map.size ry) @sizeR @ry_cache
+  (Map.rotateL.aux (< sizeL (* Map.ratio sizeR)) k x l (Bin sz ky xy ly_cache ry_cache))))
+    (Map.rotateL.aux 1 k x l r) = (Map.singleL k x l r)
+    (Map.rotateL.aux 0 k x l r) = (Map.doubleL k x l r)
+(Map.rotateL _ _ _ Tip) = "rotateL Tip"
 
- (Map.rotateR k x l r) = (Map.rotateR.aux r l k x l r )
- (Map.rotateR.aux r l k x (Bin _ _ _ ly ry) r) = (Map.rotateL.aux1 (< (Map.size ly) (* Map.ratio (Map.size ry))) k x l r)
-   (Map.rotateR.aux1 1 k x l r) = (Map.singleR k x l r)
-   (Map.rotateR.aux1 0 k x l r) = (Map.doubleR k x l r)
- (Map.rotateR.aux1 _ _ _ _ Tip) = "rotateR Tip"
+(Map.rotateR _ _ Tip _) = "rotateR Tip"
+(Map.rotateR k x (Bin sz ky xy ly ry) r) =
+  (Pair.get (Map.size ly) @sizeL @ly_cache
+  (Pair.get (Map.size ry) @sizeR @ry_cache
+  (Map.rotateR.aux (< sizeR (* Map.ratio sizeL)) k x (Bin sz ky xy ly_cache ry_cache) r)))
+    (Map.rotateR.aux 1 k x ly r) = (Map.singleR k x ly r)
+    (Map.rotateR.aux 0 k x ly r) = (Map.doubleR k x ly r)
 
 // basic rotations
 // singleL, singleR : k -> a -> Map k a -> Map k a -> Map k a
@@ -113,12 +120,11 @@
 // join : Ord k => k -> a -> Map k a -> Map k a -> Map k a
 (Map.join kx x Tip r)  = (Map.insertMin kx x r)
 (Map.join kx x l Tip)  = (Map.insertMax kx x l)
-(Map.join kx x l r) = (Map.join.aux.0 kx x l r l r)  
-(Map.join.aux.0 kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r) = (Map.join.aux.1  (>= sizeR (* Map.delta sizeL)) kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r)
-    (Map.join.aux.1 1 kx x _ (Bin _ kz z lz rz) l r) = (Map.balance kz z (Map.join kx x l lz) rz)
-    (Map.join.aux.1 0 kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r) = (Map.join.aux.2 (>= sizeL (* Map.delta sizeR)) kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) l r)
-      (Map.join.aux.2 1 kx x (Bin _ ky y ly ry) _ l r) = (Map.balance ky y ly (Map.join kx x ry r))
-      (Map.join.aux.2 0 kx x _ _ l r) = (Map.bin kx x l r)
+(Map.join kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz)) = (Map.join.aux.0 (>= sizeR (* Map.delta sizeL)) kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz))
+  (Map.join.aux.0 1 kx x (Bin sizeL ky y ly ry) (Bin _ kz z lz rz)) = (Map.balance kz z (Map.join kx x (Bin sizeL ky y ly ry) lz) rz)
+  (Map.join.aux.0 0 kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz)) = (Map.join.aux.1 (>= sizeL (* Map.delta sizeR)) kx x (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz))
+    (Map.join.aux.1 1 kx x (Bin _ ky y ly ry) (Bin sizeR kz z lz rz)) = (Map.balance ky y ly (Map.join kx x ry (Bin sizeR kz z lz rz)))
+    (Map.join.aux.1 0 kx x l r) = (Map.bin kx x l r)
 
 // insertMax,insertMin : k -> a -> Map k a -> Map k a 
 (Map.insertMax kx x Tip) = (Map.singleton kx x)
@@ -138,22 +144,25 @@
 // merge : Map k a -> Map k a -> Map k a
 (Map.merge Tip r)  = r
 (Map.merge l Tip)  = l
-(Map.merge l r) = (Map.merge.aux.0 l r l r)
-  (Map.merge.aux.0 (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r) = (Map.merge.aux.1 (>= sizeR (* Map.delta sizeL)) (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r)
-    (Map.merge.aux.1 1 _ (Bin sizeR ky y ly ry) l _) = (Map.balance ky y (Map.merge l ly) ry)
-    (Map.merge.aux.1 0 (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r) = (Map.merge.aux.2 (>= sizeL (* Map.delta sizeR)) (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) l r)
-      (Map.merge.aux.1 1 (Bin sizeL kx x lx rx) _ _ r) = (Map.balance kx x lx (Map.merge rx r))
-      (Map.merge.aux.1 0 _ _ l r) = (Map.glue l r)
+(Map.merge (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry)) = 
+  (Map.merge.aux (>= sizeR (* Map.delta sizeL)) (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry))
+    (Map.merge.aux.0 1 l (Bin _ ky y ly ry)) = (Map.balance ky y (Map.merge l ly) ry)
+    (Map.merge.aux.0 0 (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry)) = (Map.merge.aux.1 (>= sizeL (* Map.delta sizeR)) (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry))
+      (Map.merge.aux.1 1 (Bin _ kx x lx rx) r) = (Map.balance kx x lx (Map.merge rx r))
+      (Map.merge.aux.1 0 l r) = (Map.glue l r)
 
 // Glues [l] and [r] together. Assumes that [l] and [r] are already balanced with respect to each other.
 // glue : Map k a -> Map k a -> Map k a 
 (Map.glue Tip r) = r
 (Map.glue l Tip) = l
-(Map.glue l r) = (Map.glue.aux.0 (> (Map.size l) (Map.size r)) l r)
-  (Map.glue.aux.0 1 l r) = (Map.glue.aux.leftGT (Map.deleteFindMax l) l r)
-    (Map.glue.aux.leftGT (Pair (Pair km m) newL) _ r) = (Map.balance km m newL r)
-  (Map.glue.aux.0 0 l r) = (Map.glue.aux.rightGT (Map.deleteFindMin r) l r)
-    (Map.glue.aux.rightGT (Pair (Pair km m) newR) l _) = (Map.balance km m l newR)
+(Map.glue l r) = 
+  (Pair.get (Map.size l) @sizeL @l_cache 
+  (Pair.get (Map.size r) @sizeR @r_cache
+  (Map.glue.aux.0 (> sizeL sizeR) l_cache r_cache)))
+    (Map.glue.aux.0 1 l r) = (Map.glue.aux.leftGT (Map.deleteFindMax l) l r)
+      (Map.glue.aux.leftGT (Pair (Pair km m) newL) _ r) = (Map.balance km m newL r)
+    (Map.glue.aux.0 0 l r) = (Map.glue.aux.rightGT (Map.deleteFindMin r) l r)
+      (Map.glue.aux.rightGT (Pair (Pair km m) newR) l _) = (Map.balance km m l newR)
 
 // /O(log n)/. Delete and find the min/max element.
 // deleteFindMin, deleteFindMax : Map k a -> ((k, a), Map k a)
@@ -174,7 +183,7 @@
 (Map.delete k (Bin _ kx x l r)) = (Map.delete.aux (Utils.compare k kx) k (Bin _ kx x l r))
   (Map.delete.aux LT k (Bin _ kx x l r)) = (Map.balance kx x (Map.delete k l) r)
   (Map.delete.aux GT k (Bin _ kx x l r)) = (Map.balance kx x l (Map.delete k r))
-  (Map.delete.aux EQ _ (Bin _ _ _ l r)) = (Map.glue l r)
+  (Map.delete.aux EQ _ (Bin _ _ _  l r)) = (Map.glue l r)
 
 // /O(log n)/. Splits the map in two maps, one with keys smaller than k and the other with keys greater than to k.
 // Any key EQUAL to k, is not found neither in map1 nor in map2. Maybe you want 'partition' (?)
@@ -215,8 +224,8 @@
 
 // /O(1)/. The number of elements in the map.
 // size : Map k a -> Int
-(Map.size Tip) = 0
-(Map.size (Bin sz _ _ _ _)) = sz
+(Map.size Tip) = (Pair 0 Tip)
+(Map.size (Bin sz k x l r)) = (Pair sz (Bin sz k x l r))
 
 // Maybe : Some | Nothing 
 // /O(log n)/. Lookup the value at a key in the map.
@@ -245,7 +254,6 @@
 
 // /O(log n)/. Insert a new key and value in the map.
 // If the key is already present in the map, the associated value is replaced with the supplied value.
-// FIXME: too many dup
 // insert : Ord k => k -> a -> Map k a -> Map k a
 (Map.insert kx x Tip) = (Map.singleton kx x)
 (Map.insert kx x (Bin sz ky y l r)) = (Map.insert.aux (Utils.compare kx ky) (Bin sz ky y l r) kx x)
@@ -262,7 +270,7 @@
 (Map.filterWithKey pred Tip) = Tip
 (Map.filterWithKey pred (Bin _ kx x l r)) = (Map.filterWithKey.aux (pred kx x) pred (Bin _ kx x l r))
   (Map.filterWithKey.aux 1 pred (Bin _ kx x l r)) = (Map.join kx x (Map.filterWithKey pred l) (Map.filterWithKey pred r))
-  (Map.filterWithKey.aux 0 pred (Bin _ _ _ l r)) = (Map.merge (Map.filterWithKey pred l) (Map.filterWithKey pred r))
+  (Map.filterWithKey.aux 0 pred (Bin _ _  _ l r)) = (Map.merge (Map.filterWithKey pred l) (Map.filterWithKey pred r))
 
 // /O(n)/. Post-order fold. The function will be applied in ascending order.
 // foldrWithKey : (k -> a -> b -> b) -> b -> Map k a -> b
@@ -272,43 +280,20 @@
 
 // /O(n)/ Generates an list of all key/value pairs in key ascending order
 // toList : Map k a -> [(k, a)]
-(Map.toList m ) = (Map.foldrWithKey (@k @x @xs (Cons (Pair k x) xs)) Nil m)
+(Map.toList m) = (Map.foldrWithKey (@k @x @xs (Cons (Pair k x) xs)) Nil m)
 
 // /O(n)/ Generates an map from a list of key/value pairs.
 // fromList : [(k, a)] -> Map k a
 (Map.fromList Nil) = Tip
 (Map.fromList (Cons (Pair k x) xs)) = (Map.insert k x (Map.fromList xs))
 
-(TestMap) = (Map.insert 5 0 (Map.insert 4 0 (Map.insert 3 0 (Map.insert 2 0 (Map.insert 2 0 (Map.singleton 1 0))))))
-
 (PairRange 0) = Nil
 (PairRange n) = (Cons (Pair n n) (PairRange (- n 1)))
 
-(Main n) = (Map.fromList (PairRange n))
+(Main n) = 
+  let filterHigherHalf = (Map.toList (Map.filter (@x (> x (/ n 2))) (Map.fromList (PairRange n))))
 
-// master
-// n       rewrite             memsize
-// 1       10                  23
-// 10      1476     (x 147.6)   2059
-// 100     80414    (x  54.4)   126740
-// 1000    6181183  (x  76.8)   10869262
-// 10000   panicked
+  let spllitInHalf = (Utils.pairApply (@x (Map.toList x)) (Map.split (/ n 2) (Map.fromList (PairRange n))))
 
-// quadratic fix
-// n       rewrite             memsize
-// 1       11                  26
-// 10      996      (x 90.5)   1879
-// 100     25448    (x 25.5)   47340
-// 1000    424573   (x 16.6)   773606
-// 10000   5901794  (x 13.9)   10617594
-// 100000  pacniked
-
-
-// Test filtering the greater half
-// (Main n) = (Map.toList (Map.filter (@x (>= x (/ n 2))) (Map.fromList (PairRange n))))
-
-// Test spliting the map in half
-// (Main n) = (Utils.pairApply (@x (Map.toList x)) (Map.split (/ n 2) (Map.fromList (PairRange n))))
-
-// Splits a list in two parts: pred true values and pred false values
-// (Main) =  (Utils.pairApply (@x (Map.toList x)) (Map.partition (@x (== x 8)) (Map.fromList (PairRange 10))))
+  let pairWithBothSide = (Utils.pairApply (@x (Map.toList x)) (Map.partition (@x (> x (/ n 2))) (Map.fromList (PairRange n))))
+  ([(Pair "FilterGTHalf" filterHigherHalf), (Pair "SplitInHalf" spllitInHalf), (Pair "TwoThirds" pairWithBothSide)])
