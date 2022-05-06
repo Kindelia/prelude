@@ -1,0 +1,33 @@
+(List.Concat Nil ys) = ys
+(List.Concat (Cons x xs) ys) = (Cons x (List.Concat xs ys))
+
+(List.Reverse Nil) = Nil
+(List.Reverse (Cons x xs)) = (List.Concat (List.Reverse xs) (Cons x Nil))
+
+//-----------
+
+(Empty) = (Zip Nil Nil)
+
+(FromList xs) = (Zip Nil xs)
+
+(ToList (Zip ls rs)) = (List.Concat (List.Reverse ls) rs)
+
+(Left (Zip Nil rs)) = (Zip Nil rs)
+(Left (Zip (Cons a ls) rs)) = (Zip ls (Cons a rs))
+
+(Right (Zip ls Nil)) = (Zip ls Nil)
+(Right (Zip ls (Cons a rs))) = (Zip (Cons a ls) rs)
+
+(Insert x (Zip ls rs)) = (Zip ls (Cons x rs))
+
+(Delete (Zip ls Nil)) = (Zip ls Nil)
+(Delete (Zip ls (Cons _ rs))) = (Zip ls rs)
+
+(Push x (Zip ls rs)) = (Zip (Cons x ls) rs)
+
+(Pop (Zip Nil rs)) = (Zip Nil rs)
+(Pop (Zip (Cons _ ls) rs)) = (Zip ls rs)
+
+(Reverse (Zip ls rs)) = (Zip rs ls)
+
+(Main) = (Reverse (Left (Right (FromList [1,2,3]))))
