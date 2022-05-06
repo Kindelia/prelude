@@ -26,7 +26,8 @@ based on this
 
 There isn't a language since it's been built from zero, and it's not necessary on functional programing.
 
-Anyway, there are some functions which are been used repeatedly,
+Anyway, there is the [HVM's Core Language Overview](https://github.com/Kindelia/HVM/blob/master/HOW.md#hvms-core-language-overview),
+and there are  some functions which are been used repeatedly,
 maybe you can find more about then on
 [kind repository](https://github.com/Kindelia/Kind/tree/master/base).
 
