@@ -36,12 +36,11 @@
         let merged = (MergeByTwo (Cons x xs))
         (Mergesort.aux merged)
 
-(Head (Cons x xs)) = x
-
 // Generates a random list
 // Copied from https://raw.githubusercontent.com/Kindelia/HVM/b09c6e5/bench/QuickSort/main.hvm
 (Randoms s 0) = (Nil)
 (Randoms s l) = (Cons s (Randoms (+ (* s 1664525) 1013904223) (- l 1)))
+
 
 (Main n) =
     (Mergesort (Randoms 1 n))

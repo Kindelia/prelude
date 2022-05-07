@@ -47,18 +47,19 @@
 // Adds an element to the Set
 // Add(x: A, z: SortSet<A>) -> SortSet<A>
 (SortSet.add x (SortSet size segs)) = (SortSet (+ size 1) (InsertSeg (Cons x Nil) segs size))
-    (InsertSeg seg segs size) = (InsertSeg.aux (% size 2) seg segs size)
-        (InsertSeg.aux 0 seg  segs       size) = (Cons seg segs)
-        (InsertSeg.aux 1 seg (Cons x xs) size) = (InsertSeg (Merge seg x) xs (>> size 1))
+
+(InsertSeg seg segs size) = (InsertSeg.aux (% size 2) seg segs size)
+    (InsertSeg.aux 0 seg  segs       size) = (Cons seg segs)
+    (InsertSeg.aux 1 seg (Cons x xs) size) = (InsertSeg (Merge seg x) xs (>> size 1))
 
 // Sorts the elements of the Set
 // Sort(x: SortSet<A>) -> List<A>
-(SortSet.sort (SortSet _ segs)) = (List.foldl @x@y(Merge x y) Nil segs)
+(SortSet.sort (SortSet _ segs)) = (List.foldl @x @y(Merge x y) Nil segs)
 
 
 (Main n) =
     let set = (List.foldl
-        @x@y(SortSet.add y x)
+        @x @y(SortSet.add y x)
         SortSet.Empty
         (DecRange n)
     )
