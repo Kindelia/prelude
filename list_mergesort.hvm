@@ -1,11 +1,12 @@
 // Bottom-up MergeSort
 
-// Creates a list of singleton lists from a regular list
+// Creates a list of doubleton ordered lists from a regular list
 // List.ToSingleton(xs: List) -> List<List>
-(List.ToSingleton  Nil       ) = Nil
-(List.ToSingleton (Cons x xs)) =
-    let head = (Cons x Nil)
-    let tail = (List.ToSingleton xs)
+(List.ToDoubleton  Nil                ) = Nil
+(List.ToDoubleton (Cons x  Nil       )) = (Cons (Cons x Nil) Nil)
+(List.ToDoubleton (Cons x (Cons y ys))) =
+    let head = (Merge (Cons x Nil) (Cons y Nil))
+    let tail = (List.ToDoubleton ys)
     (Cons head tail)
 
 // Merges two ordered lists
@@ -17,7 +18,7 @@
     (Merge.aux 0 xs (Cons y ys)) = (Cons y (Merge xs ys))
 
 // Merges a list of lists 2-by-2
-// Example1: [[2],[3],[4],[1],[9],[5]] - >[[2,3],[1,4],[5,9]]
+// Example1: [[2],[3],[4],[1],[9],[5]] -> [[2,3],[1,4],[5,9]]
 // Example2: [[2,3],[1,4],[5,9]] -> [[1,2,3,4],[5,9]]
 // MergeByTwo(xs: List<List>) -> List<List>
 (MergeByTwo  Nil                ) = Nil
@@ -29,7 +30,7 @@
 
 // Sorts a list using the Mergesort algorithm
 // Mergesort(xs: List) -> List
-(Mergesort xs) = (Mergesort.aux (List.ToSingleton xs))
+(Mergesort xs) = (Mergesort.aux (List.ToDoubleton xs))
     (Mergesort.aux  Nil        ) = Nil
     (Mergesort.aux (Cons x Nil)) = x
     (Mergesort.aux (Cons x xs )) =
