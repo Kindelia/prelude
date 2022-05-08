@@ -1,0 +1,20 @@
+// Non-Catenable Double Endend Queue
+
+// New purely functional data structures published since 1998:
+
+// 2003: New catenable and non-catenable deques, by Radu Mihaescu and Robert Tarjan: 
+// A new take on some older work (by Kaplan and Tarjan) that Okasaki cites 
+// (The most recent version of Kaplan & Tarjan's work was published in 2000). This version is simpler in some ways.
+
+// Purely Functional, Real-Time Deques with Catenation
+
+// Notes on Catenable Deques in Pure LISP
+
+// We define the descendants{child^i(d)} of deque d in the standard way, 
+// namely child^0 (d) = d and child^i+1 (d) = child(child^i(d)) for 
+// i >= 0 if child^i (d) is nonempty.
+
+// buffer coloring
+// green:   2 or 3 elements
+// yellow:  1 or 4 elements
+// red:     0 or 5 elements

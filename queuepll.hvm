@@ -1,0 +1,72 @@
+// // Chris Okasaki
+// // Simple and efficient purely functional queues and deques
+
+// Queue as paried Lazy List QueueLL
+// []q                  =   <[],[]>
+// |<L,R>|q             =   |L| + |R|
+// insert(e,<L,R>)      =   makeq<L,e:R>
+// remove(L,R)          =   <hd L,makeq<tl L,R>>
+// makeq <L,R>          =   <L,R>                       {|R|<=|L|  }
+//                      =   <rot (L,R,[]),[]>           {|R|= |L|+1}
+// rot(L,R,A)           =   hd R:A                      {|L|=0}
+//                      =   hd L:rot(tl L,tl R,hd R:A)  {|L|>0}
+(QueueLL Nil)                       =   (Pair Nil Nil)
+(QueueLL (Cons l r))                =   (Pair l (Rev r))
+
+// Insert element to queue
+// (Push e (Pair Nil Nil))   =   (Pair Nil (Cons e Nil))
+// (Push e (Pair Nil r))     =   (Pair Nil (Cons e r))
+(Push e (Pair l r))       =   (Makeq (Pair l (Cons e r)))
+
+// Remove element of the queue
+(Pop (Pair (Cons l ls) r))  =   (Makeq (Pair ls r))
+
+// Makeq is an auxiliary function that enforces the invariant |R|<=|L|.
+// makeq <L,R>          =   <L,R>                       {|R|<=|L|  }    Case 1
+//                      =   <rot (L,R,[]),[]>           {|R|= |L|+1}    Case 0
+(Makeq (Pair l r))      =   (MakeqAux (<= (Length r) (Length l)) l r)
+    (MakeqAux 1 l r)    =   (Pair l r)
+    (MakeqAux 0 l r)    =   (Pair (Rot l r Nil) Nil)
+// R[1,2,3]     L[1,2,3]    |   R[1,2,3,4]  L[1,2,3]
+// Rl == Ll,    Rl <  Ll +1 |   Rl > Ll,    Rl = Ll +1
+
+// Periodically replacing <L,R> with <L++(Rev R),[]>, call this a rotation
+// rot(L,R,A)           =   hd R:A                      {|L|=0}
+//                      =   hd L:rot(tl L,tl R,hd R:A)  {|L|>0}
+(Rot Nil (Cons r rs) a)             =   (Cons r a)   
+(Rot (Cons l ls) (Cons r rs) a)     =   (Cons l (Rot ls rs (Cons r a)))
+
+// Drop n terms from queue
+(Drop 0 queue)                  =   queue
+(Drop n (Pair (Cons l ls) r))   =   (Drop (- n 1) (Makeq (Pair ls r)))
+
+// Take n terms from queue
+(Take 0 queue)                  =   Nil
+(Take n (Pair (Cons l ls) r))   =   (Cons l (Take (- n 1) (Makeq (Pair ls r))))
+
+// Reverse list
+(Rev xs)                        =   (RevAux xs Nil)
+    (RevAux Nil ys)             =   ys
+    (RevAux (Cons x xs) ys)     =   (RevAux xs (Cons x ys))
+
+// List length 
+(Length Nil)                =   0    
+(Length (Cons x xs))        =   (+ 1 (Length xs))
+
+// RecursivePush mata hvm
+(RecursivePush 0 e list)    =   list
+(RecursivePush n e list)    =   (RecursivePush (- n 1) e (Push e list))
+
+(RecursivePop 0 list)       =   list
+(RecursivePop n list)       =   (RecursivePop (- n 1) (Pop list))
+
+
+(Main) =
+    let queue = (QueueLL Nil)
+    // let queue = (Push 1 queue)
+    let queue = (RecursivePush 5 1 queue)
+    let queue = (RecursivePush 4 2 queue)
+    let queue = (RecursivePush 10 3 queue)
+    // (RecursivePop 99 queue)
+    // (Drop 99 queue)
+    (Take 10 queue)

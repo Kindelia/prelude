@@ -1,0 +1,21 @@
+// My Simple Queue Implementation
+
+// Push list adding one element to their head
+(Push e list)            =   (Cons e list)
+
+// Pop list removing the first element added
+(Pop Nil)               = Nil
+(Pop (Cons x Nil))      = Nil
+(Pop (Cons x xs))       = (Cons x (Pop xs))
+    
+(RecursivePush 0 e list)    = (Cons e list)
+(RecursivePush n e list)    = (RecursivePush (- n 1) e (Cons e list))
+
+(RecursivePop 0 list)    = (Pop list)
+(RecursivePop n list)    = (RecursivePop (- n 1) (Pop list))
+
+(Main) =
+    let queue = Nil
+    let queue = (RecursivePush 10 1 queue)
+    (RecursivePop 2 queue)
+

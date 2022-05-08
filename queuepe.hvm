@@ -1,0 +1,20 @@
+// // Chris Okasaki
+// // Simple and efficient purely functional queues and deques
+
+// Queues with pre-evaluation
+
+// []q                  = <[],[],[]>
+
+// |<L,R,L^>|q          = |L| + |R|
+
+// insert (e,<L,R,L^>)  = makeq <L,e : R,L^>
+
+// remove <L,R,L^>      = <hd L,makeq <tl L,R,L^>>
+
+// makeq <L, R, L^>     = <L, R, tl L^>                         {|L^| > 0}
+//                      = let L' = rot(L,R,[]) in<L',[],L')     {|L^| = 0}
+
+// rot (L,R,A)          = hd R: A                               {|L|  = 0}
+//                      = hd L: rot {tl L, tl R,hd R: A)        {|L|  > 0}
+
+
