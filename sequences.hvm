@@ -1,0 +1,382 @@
+// == Sequences in HVM ==
+
+// Finger Trees are a very cool and interesting structure
+// because they provide fast access on both ends;
+// and these sequences are a specialization of Finger Trees
+// specifically when you use the monoid of Natural numbers with sum.
+
+// Sequences provide the following operations in O(1) amortized:
+// - head
+// - tail
+// - push_left (cons)
+// - init
+// - last
+// - push_right (snoc)
+// and the following ones in O(log n) amortized:
+// - concat [not implemented yet]
+// - indexing
+
+// since trees specialize measures to size, this means
+// we can access the nth element of the structure in relatively cheap time
+
+// this still has a lot of bugs and dumb code. and it has zero type notation,
+// as i still dont know exactly how kind 2 wants me to do it
+
+
+
+(Not 1) = 0
+(Not 0) = 1
+
+(Pair.fst (Pair x y)) = x
+(Pair.snd (Pair x y)) = y
+(Pair.get (Pair x y) fn) = (fn x y)
+(Split.get (Split l x r) fn) = (fn l x r)
+(View.get (View (Cons elem tail)) fn) = (fn elem tail)
+// of course i will completely ignore the cases where View returns Nil (empty tree)
+// and there is absolutely nothing that could go wrong here /s
+
+(Foldr f Nil z)         = z
+(Foldr f (Cons x xs) z) = (f x (Foldr f xs z))
+
+(Foldl f Nil z)         = z
+(Foldl f (Cons x xs) z) = (Foldl f xs (f z x))
+
+(Reducer f Nil z) = z
+(Reducer f (Cons x xs) z) = (Foldr f (Cons x xs) z)
+
+(Reducel f Nil z) = z
+(Reducel f (Cons x xs) z) = (Foldl f (Cons x xs) z)
+
+// TODO: linearize reduce (remove f's duplication (monads!))
+(Reducer f (One a) z) = (f z a)
+(Reducer f (Two a b) z) = (f (f z b) a)
+(Reducer f (Three a b c) z) = (f (f (f z c) b) a)
+(Reducer f (Four a b c d) z) = (f (f (f (f z d) c) b) a)
+
+(Reducer f (Node2 _ a b)   z) = (f (f z b) a)
+(Reducer f (Node3 _ a b c) z) = (f (f (f z c) b) a)
+
+(Reducer f Empty          z) = z
+(Reducer f (Single  x)    z) = (f z x)
+(Reducer f (Deep _ pr m sf) z) =
+  let right  = (Reducer f sf z)
+  let middle = (Reducer λsλe(Reducer f e s) m right)
+  (Reducer f pr middle)
+  
+(Reducer f Nil z) = z
+(Reducer f (Cons x xs) z) = (Foldr f (Cons x xs) z)
+
+(Reducel f Empty          z) = z
+(Reducel f (Single x)     z) = (f x z)
+(Reducel f (Deep _ pr m sf) z) =
+  let left  = (Reducel f pr z)
+  let middle = (Reducel λsλe(Reducel f e s) m left)
+  (Reducel f sf middle)
+
+(Reducel f (Node2 _ a b)    z) = (f (f z a) b)
+(Reducel f (Node3 _ a b c)  z) = (f (f (f z a) b) c)
+
+(Reducel f (One a) z) = (f z a)
+(Reducel f (Two a b) z) = (f (f z a) b)
+(Reducel f (Three a b c) z) = (f (f (f z a) b) c)
+(Reducel f (Four a b c d) z) = (f (f (f (f z a) b) c) d)
+
+
+// function that returns a special kind of cons list
+// of the type (Cons V (FingerTree V)), that is:
+// it uses the same Nil and Cons constructors (maybe i should give them new names)
+// but the tails are always well-formed Finger trees
+// This is very useful for element deletion in a persistent way
+(FTree.viewl Empty) = (View Nil)
+(FTree.viewl (Single x)) = (View (Cons x Empty))
+(FTree.viewl (Deep c pr m sf)) = (View (Cons (FTree.digit.head pr) (FTree.deepl (FTree.digit.tail pr) m sf)))
+
+// same function but for right side
+(FTree.viewr Empty) = (View Nil)
+(FTree.viewr (Single x)) = (View (Cons x Empty))
+(FTree.viewr (Deep c pr m sf)) = (View (Cons (FTree.digit.last sf) (FTree.deepr pr m (FTree.digit.but_last sf))))
+
+// helper function to keep the middle recursive tree behaved
+(FTree.deepl Nothing   m sf) =
+  let m_view = (FTree.viewl m)
+  (FTree.deepl.1 m_view sf)
+
+(FTree.deepl.1 (View Nil) sf) = (FTree.digit.to_tree sf)
+(FTree.deepl.1 (View (Cons a new_m)) sf) = (Deep.go (FTree.node.to_digit a) new_m sf)
+
+(FTree.deepl pr m sf) = (Deep.go pr m sf)
+
+(FTree.deepr pr m Nothing) =
+  let m_view = (FTree.viewr m)
+  (FTree.deepr.1 pr m_view)
+
+(FTree.deepr.1 pr (View Nil)) = (FTree.digit.to_tree pr)
+(FTree.deepr.1 pr (View (Cons a new_m))) = (Deep.go pr new_m (FTree.node.to_digit a))
+  
+(FTree.deepr pr m sf) = (Deep.go pr m sf)
+
+// insert an element at the left-most position of a tree
+(FTree.push_left Empty a) = (Single a)
+(FTree.push_left (Single b) a) = 
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Deep (+ a_measure b_measure) (One a_cache) Empty (One b_cache))))
+
+(FTree.push_left (Deep v (Four b c d e) m sf) a) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure c) λc_measureλc_cache
+  (Pair.get (Measure d) λd_measureλd_cache
+  (Pair.get (Measure e) λe_measureλe_cache
+  (Deep (+ v a_measure) (Two a_cache b) (FTree.push_left m (Node3 (+ c_measure (+ d_measure e_measure)) c d e)) sf)))))
+
+(FTree.push_left (Deep v pr m sf) a) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Deep (+ v a_measure) (FTree.digit.snoc a_cache pr) m sf))
+
+
+// insert an element at the right-most position of a tree
+(FTree.push_right Empty a) = (Single a)
+(FTree.push_right (Single b) a) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Deep (+ a_measure b_measure) (One b_cache) Empty (One a_cache))))
+(FTree.push_right (Deep v pr m (Four e d c b)) a) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure c) λc_measureλc_cache
+  (Pair.get (Measure d) λd_measureλd_cache
+  (Pair.get (Measure e) λe_measureλe_cache
+  (Deep (+ v a_measure) pr (FTree.push_right m (Node3 (+ c_measure (+ d_measure e_measure)) e_cache d_cache c_cache)) (Two b a_cache))))))
+(FTree.push_right (Deep v pr m sf) a) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Deep (+ v a_measure) pr m (FTree.digit.cons a_cache sf)))
+
+// some helper functions for digits
+// you can think of them as fixed sized lists, ranging from 1 to 4 elements in size
+
+(FTree.digit.cons a Nothing) = (One a)
+(FTree.digit.cons a (One b)) = (Two b a)
+(FTree.digit.cons a (Two b c)) = (Three b c a)
+(FTree.digit.cons a (Three b c d)) = (Four b c d a)
+
+(FTree.digit.snoc a Nothing) = (One a)
+(FTree.digit.snoc a (One b)) = (Two a b)
+(FTree.digit.snoc a (Two b c)) = (Three a b c)
+(FTree.digit.snoc a (Three b c d)) = (Four a b c d)
+
+(FTree.digit.head (One a))        = a
+(FTree.digit.head (Two a _))      = a
+(FTree.digit.head (Three a _ _))  = a
+(FTree.digit.head (Four a _ _ _)) = a
+
+(FTree.digit.tail (One _))        = Nothing
+(FTree.digit.tail (Two _ b))      = (One b)
+(FTree.digit.tail (Three _ b c))  = (Two b c)
+(FTree.digit.tail (Four _ b c d)) = (Three b c d)
+
+// i think this is called init?
+// i've seen something like this somewhere
+(FTree.digit.but_last (One _))    = Nothing
+(FTree.digit.but_last (Two a _))  = (One a)
+(FTree.digit.but_last (Three a b _)) = (Two a b)
+(FTree.digit.but_last (Four a b c _)) = (Three a b c)
+
+(FTree.digit.last (One a))        = a
+(FTree.digit.last (Two _ a))      = a
+(FTree.digit.last (Three _ _ a))  = a
+(FTree.digit.last (Four _ _ _ a)) = a
+
+// converts a digit to a tree (useful in FTree.deep)
+(FTree.digit.to_tree Nothing) = Empty
+(FTree.digit.to_tree (One a)) = (Single a)
+(FTree.digit.to_tree (Two a b)) = (Deep.go (One a) Empty (One b))
+(FTree.digit.to_tree (Three a b c)) = (Deep.go (One a) Empty (Two b c))
+(FTree.digit.to_tree (Four a b c d)) = (Deep.go (One a) Empty (Three b c d))
+
+(FTree.node.to_digit (Node2 _ a b)) = (Two a b)
+(FTree.node.to_digit (Node3 _ a b c)) = (Three a b c)
+
+// just helper easy functions
+(FTree.headl tree) = (View.get (FTree.viewl tree) λelemλtail (elem))
+(FTree.headr tree) = (View.get (FTree.viewr tree) λelemλtail (elem))
+(FTree.taill tree) = (View.get (FTree.viewl tree) λelemλtail (tail))
+(FTree.tailr tree) = (View.get (FTree.viewr tree) λelemλtail (tail))
+
+// this mess is all the functions used in FTree.split
+// and FTree.split.tree
+
+// FTree.split receives a tree and a predicate function
+// and splits the tree when the predicate turns from false to true
+
+// FTree.split.tree is the main function, and returns a 3-uple (Split left x right)
+// where x is the first element that the predicate turns true, and left and right are
+// well-formed finger trees
+(FTree.split.digit pred i (One a)) = (Split Nothing a Nothing)
+(FTree.split.digit pred i (Two a b)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (FTree.split.digit.1 (pred (+ i a_measure)) pred (+i a_measure) a_cache (One b)))
+
+(FTree.split.digit pred i (Three a b c)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (FTree.split.digit.1 (pred (+ i a_measure)) pred (+i a_measure) a_cache (Two b c)))
+
+(FTree.split.digit pred i (Four a b c d)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (FTree.split.digit.1 (pred (+ i a_measure)) pred (+i a_measure) a_cache (Three b c d)))
+
+(FTree.split.digit.1 1 pred i a tail) = (Split Nothing a tail)
+(FTree.split.digit.1 0 pred i a tail) =
+  (Split.get (FTree.split.digit pred i tail) λlλxλr
+  (Split (FTree.digit.snoc a l) x r))
+
+
+(FTree.split pred Empty) = (Pair Empty Empty)
+(FTree.split pred xs) =
+  (Pair.get (Measure xs) λxs_measureλxs_cache
+  (FTree.split.1 pred (pred xs_measure) xs_cache))
+
+(FTree.split.1 pred 1 xs) = (Split.go (FTree.split.tree pred 0 xs))
+(FTree.split.1 pred 0 xs) = (Pair xs Empty)
+
+(Split.go (Split l x r)) = (Pair l (FTree.push_left r x))
+
+
+(FTree.split.tree pred i (Single x)) = (Split Empty x Empty)
+(FTree.split.tree pred i (Deep c pr m sf)) =
+  (Pair.get (Measure pr) λpr_measureλpr_cache
+  (FTree.split.tree.1 (pred (+ i pr_measure)) pred (+ i pr_measure) (Deep c pr_cache m sf)))
+
+(FTree.split.tree.1 1 pred i (Deep c pr m sf)) =
+  (Split.get (FTree.split.digit pred i pr) λlλxλr
+  (Split (FTree.digit.to_tree l) x (FTree.deepl r m sf)))
+
+(FTree.split.tree.1 0 pred i (Deep c pr m sf)) =
+  (Pair.get (Measure m) λm_measureλm_cache
+  (FTree.split.tree.2 (pred (+ i m_measure)) pred i (+ i m_measure) (Deep c pr m_cache sf)))
+  
+(FTree.split.tree.2 1 pred vpr vm (Deep c pr m sf)) =
+  (Split.get (FTree.split.tree pred vpr m) λmlλxsλmr
+  (Pair.get  (Measure ml)                  λml_measureλml_cache
+  (Split.get (FTree.split.digit pred (+ vpr ml_measure) (FTree.node.to_digit xs)) λlλxλr
+  (Split (FTree.deepr pr ml_cache l) x (FTree.deepl r mr sf)))))
+
+(FTree.split.tree.2 0 pred vpr vm (Deep c pr m sf)) =
+  (Split.get (FTree.split.digit pred vm sf) λlλxλr
+  (Split (FTree.deepr pr m l) x (FTree.digit.to_tree r)))
+
+// TODO: figure a way that is not completely stupid of implementing concat :D
+
+(FTree.concat xs ys) = (FTree.append.tree0 xs ys)
+
+
+
+// functions that measure the finger trees
+// all of these have been specialized to Sequences (specifically, the binary
+// operation has been substituted by + and the identity element is 0).
+(Node2.go a b) = 
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Node2 (+ a_measure b_measure) a_cache b_cache)))
+  
+(Node3.go a b c) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Pair.get (Measure c) λc_measureλc_cache
+  (Node3 (+ (+ a_measure b_measure) c_measure) a_cache b_cache c_cache))))
+
+(Deep.go pr m sf) =
+  (Pair.get (Measure pr) λpr_measureλpr_cache
+  (Pair.get (Measure  m) λm_measure λm_cache
+  (Pair.get (Measure sf) λsf_measureλsf_cache
+  (Deep (+ (+ pr_measure m_measure) sf_measure) pr_cache m_cache sf_cache))))
+
+(Measure (Node2 v a b))    = (Pair v (Node2 v a b))
+(Measure (Node3 v a b c))  = (Pair v (Node3 v a b c))
+(Measure (Deep v pr m sf)) = (Pair v (Deep v pr m sf))
+(Measure Empty)            = (Pair 0 Empty)
+(Measure (Single x)) =
+  (Pair.get (Measure x) λx_measureλx_cache
+  (Pair x_measure (Single x_cache)))
+
+(Measure (One a)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair a_measure (One a_cache)))
+
+(Measure (Two a b)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Pair (+ a_measure b_measure) (Two a_cache b_cache))))
+
+(Measure (Three a b c)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Pair.get (Measure c) λc_measureλc_cache
+  (Pair (+ a_measure (+ b_measure c_measure)) (Three a_cache b_cache c_cache)))))
+
+(Measure (Four a b c d)) =
+  (Pair.get (Measure a) λa_measureλa_cache
+  (Pair.get (Measure b) λb_measureλb_cache
+  (Pair.get (Measure c) λc_measureλc_cache
+  (Pair.get (Measure d) λd_measureλd_cache
+  (Pair (+ a_measure (+ b_measure (+ c_measure d_measure))) (Four a_cache b_cache c_cache d_cache))))))
+
+// if none of the above matches...
+(Measure x) = (Pair 1 x)
+
+// some small helper functions for sequences
+// all of them are implemented in terms of the ones shown above.
+(Seq.new) = Empty
+
+(Seq.push_front seq x) = (FTree.push_left seq x)
+(Seq.push_back  seq x) = (FTree.push_right seq x)
+(Seq.to_list     tree) = (Reducer λtailλx(Cons x tail) tree Nil)
+
+(Seq.from_list list)   = (Seq.from_list.1 list Empty)
+(Seq.from_list.1 Nil tree)         = tree
+(Seq.from_list.1 (Cons x xs) tree) = (Seq.from_list.1 xs (FTree.push_right tree x))
+
+(Seq.head seq) = (FTree.headl seq)
+(Seq.last seq) = (FTree.headr seq)
+(Seq.tail seq) = (FTree.taill seq)
+(Seq.init seq) = (FTree.tailr seq) // first n-1 elements, like an inversed tail
+
+(Seq.length seq) = (Pair.fst (Measure seq))
+
+(Seq.split_at seq i) = (FTree.split λk(< i k) seq)
+(Seq.nth seq n) = (Split.get (FTree.split.tree λk(< n k) 0 seq) λ_λxλ_(x))
+(Seq.takeUntil seq predicate) = (Pair.get (FTree.split predicate seq) λfstλsnd (fst))
+(Seq.dropUntil seq predicate) = (Pair.get (FTree.split predicate seq) λfstλsnd (snd))
+
+(Seq.insertAt seq pos x) =
+  (Pair.get (FTree.split λk(> k pos) seq) λleftλright
+  (FTree.concat left (FTree.push_left x right)))
+
+(Seq.range 0) = Empty
+(Seq.range n) = (FTree.push_right (Seq.range (- n 1)) (- n 1))
+
+(Main n) =
+  (Seq.length (Seq.range n))
+
+// this was the test program 
+(Test n) =
+  let inserts = (Range n Nil)
+  let seq = (Seq.from_list inserts)
+  (Seq.length seq)
+  
+// and these were the benchmarks:
+// branch : quadratic fix
+// n        # of rewrites
+//       1          15
+//      10         192 (x 12.8)
+//     100       2 095 (x 10.91)
+//   1 000      21 406 (x 10.21)
+//  10 000     214 875 (x 10.03)
+// 100 000   2 149 850 (x 10.005)
+
+// branch : master | after rewrite with pairs (and without fold)
+// n        # of rewrites
+//       1          18         
+//      10         146 (x 8.11)
+//     100       1 556 (x 10.65)
+//   1 000      15 656 (x 10.06)
+//  10 000     156 656 (x 10.00)
+// 100 000   1 566 656 (x 10.00)
