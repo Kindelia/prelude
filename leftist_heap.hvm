@@ -1,31 +1,37 @@
 // Leftist Heap implementation based on Okasaki's book
 
-// Leftist heaps are data structures which ...
+// From (Okasaki, 1998): "Leftist heaps are heap-ordered binary trees that satisfy the
+// leftist property: the rank of any left child is at least as large as the rank of its
+// right sibling. The rank of a node is defined to be the length of its right spine
+// (i.e., the rightmost path from the node in question to an empty node). A simple
+// consequence of the leftist property is that the right spine of any node is always
+// the shortest path to an empty node" 
 
+// The Tree constructor takes 4 parametres: rank, content, left subtree/empty
+// and right subtree/empty
 
-// Incompleta
+// Merges two trees. Merge is called recursively on the right subtree of the tree with 
+// the smallest content and the other tree. MakeT is a helper function which swaps two
+// sibling trees to maintain the leftist property
 (Merge h Empty) = h
 (Merge Empty h) = h
 (Merge (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MergeAux (<= x y) (Tree _ x a1 b1) (Tree _ y a2 b2))
     (MergeAux True (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT x a1 (Merge b1 (Tree _ y a2 b2)))
     (MergeAux False (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT y a2 (Merge (Tree _ x a1 b1) b2))
 
-// Incompleta
 (Rank Empty) = 0
-(Rank (Tree r _ _ _)) r
+(Rank (Tree r _ _ _)) = r
 
-// Incompleta
+// Helper function to Merge. Creates a tree and swaps the subtrees if needed to 
+// maintain the leftist property
 (MakeT x a b) = (MakeTAux (>= (Rank a) (Rank b)) x a b)
     (MakeTAux True  x a b) = (Tree (+ (Rank b) 1) x a b)
     (MakeTAux False x a b) = (Tree (+ (Rank a) 1) x b a)
 
-// Incompleta
 (Insert x h) = (Merge (Tree 1 x Empty Empty) h)
 
-// Incompleta
-(FindMin (Tree _ x a b)) = x
+(FindMin (Tree _ x _ _)) = x
 
-// Incompleta
 (DeleteMin (Tree _ x a b)) = (Merge a b)
 
-(Main) = 
+(Main) =
