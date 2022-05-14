@@ -13,11 +13,11 @@
 // Merges two trees. Merge is called recursively on the right subtree of the tree with 
 // the smallest content and the other tree. MakeT is a helper function which swaps two
 // sibling trees to maintain the leftist property
-(Merge h Empty) = h
-(Merge Empty h) = h
-(Merge (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MergeAux (<= x y) (Tree _ x a1 b1) (Tree _ y a2 b2))
-    (MergeAux True (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT x a1 (Merge b1 (Tree _ y a2 b2)))
-    (MergeAux False (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT y a2 (Merge (Tree _ x a1 b1) b2))
+(LHeap.merge h Empty) = h
+(LHeap.merge Empty h) = h
+(LHeap.merge (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MergeAux (<= x y) (Tree _ x a1 b1) (Tree _ y a2 b2))
+    (MergeAux 1 (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT x a1 (LHeap.merge b1 (Tree _ y a2 b2)))
+    (MergeAux 0 (Tree _ x a1 b1) (Tree _ y a2 b2)) = (MakeT y a2 (LHeap.merge (Tree _ x a1 b1) b2))
 
 (Rank Empty) = 0
 (Rank (Tree r _ _ _)) = r
@@ -25,13 +25,17 @@
 // Helper function to Merge. Creates a tree and swaps the subtrees if needed to 
 // maintain the leftist property
 (MakeT x a b) = (MakeTAux (>= (Rank a) (Rank b)) x a b)
-    (MakeTAux True  x a b) = (Tree (+ (Rank b) 1) x a b)
-    (MakeTAux False x a b) = (Tree (+ (Rank a) 1) x b a)
+    (MakeTAux 1 x a b) = (Tree (+ (Rank b) 1) x a b)
+    (MakeTAux 0 x a b) = (Tree (+ (Rank a) 1) x b a)
 
-(Insert x h) = (Merge (Tree 1 x Empty Empty) h)
+(LHeap.insert x h) = (LHeap.merge (Tree 1 x Empty Empty) h)
 
-(FindMin (Tree _ x _ _)) = x
+(LHeap.findMin (Tree _ x _ _)) = x
 
-(DeleteMin (Tree _ x a b)) = (Merge a b)
+(LHeap.deleteMin (Tree _ x a b)) = (LHeap.merge a b)
 
-(Main) =
+// Generates a leftist heap from a list
+(LHeap.fromList Nil) = Empty
+(LHeap.fromList (Cons x xs)) = (LHeap.merge (LHeap.insert x Empty) (LHeap.fromList xs))
+
+(Main) = (LHeap.fromList [1,2,5,4,3])
