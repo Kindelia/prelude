@@ -35,13 +35,13 @@ maybe you can find more about then on
 ### Okasaki
 * ~~Lists (done)~~
 * Binary Search Trees (Miguel)
-* Leftist Heaps (Guilherme)
+* ~~Leftist Heaps (done)~~
 * ~~Red-Black Trees (done)~~
 * Streams
 * Queues (Daniel e Lucas)
 * ~~Binomial Heaps (done)~~
 * Splay Heaps
-* Pairing Heaps
+* Pairing Heaps (Guilherme)
 
 #### Advanced
 * The Banker's Method
