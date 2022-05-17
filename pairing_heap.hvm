@@ -1,0 +1,21 @@
+
+
+
+
+
+
+// Type PHeap = Empty | (Tree element [heap list])
+
+// Find minimum element
+(PHeap.findMin (Tree x hs)) = x
+
+// Merge
+(PHeap.merge Empty h) = h
+(PHeap.merge h Empty) = h
+(PHeap.merge (Tree x hs1) (Tree y hs2)) = (PHeap.merge.aux (<= x y) (Tree x hs1) (Tree y hs2))
+    (PHeap.merge.aux 1 (Tree x hs1) (Tree y hs2)) = (Tree x (Cons (Tree y hs2) hs1))
+    (PHeap.merge.aux 0 (Tree x hs1) (Tree y hs2)) = (Tree y (Cons (Tree x hs1) hs2))
+
+// Insert
+(PHeap.insert x h) = (PHeap.merge (Tree x Nil) h)
+
