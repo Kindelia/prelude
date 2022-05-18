@@ -8,6 +8,7 @@
 // Type PHeap = Empty | (Tree element [heap list])
 
 // Find minimum element
+(PHeap.findMin Empty) = (Maybe.None)
 (PHeap.findMin (Tree x hs)) = x
 
 // Merge
@@ -23,3 +24,16 @@
 // Insert
 (PHeap.insert x h) = (PHeap.merge (PHeap.singleton x) h)
 
+// Helper function for deleteMin. It merges children heaps in pairs from left to right,
+// then merges the resulting heaps from right to left.
+(PHeap.mergePairs Nil) = Empty
+(PHeap.mergePairs [h]) = h
+(PHeap.mergePairs (Cons h1 (Cons h2 hs))) = (PHeap.merge (PHeap.merge h1 h2) (PHeap.mergePairs hs))
+
+// Delete minimum element
+(PHeap.deleteMin Empty) = Empty
+(PHeap.deleteMin (Tree x hs)) = (PHeap.mergePairs hs)
+
+// Constructs a pairing heap from a list
+(PHeap.fromList Nil) = Empty
+(PHeap.fromList (Cons x xs)) = (PHeap.merge (PHeap.singleton x) (PHeap.fromList xs))
