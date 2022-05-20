@@ -41,7 +41,7 @@ maybe you can find more about then on
 * Queues (Daniel e Lucas)
 * ~~Binomial Heaps (done)~~
 * Splay Heaps
-* Pairing Heaps (Guilherme)
+* ~~Pairing Heaps (done)~~
 
 #### Advanced
 * The Banker's Method

@@ -1,15 +1,9 @@
+// Pairing Heap implementation based on Okasaki's book
 
+// From (Okasaki, 1998): "Pairing heaps are heap-ordered multiway trees"
+// Each tree node contains an element and a list of heaps
 
-
-
-
-
-
-// Type PHeap = Empty | (Tree element [heap list])
-
-// Find minimum element
-(PHeap.findMin Empty) = (Maybe.None)
-(PHeap.findMin (Tree x hs)) = x
+// type PHeap = Empty | (Tree element [heap list])
 
 // Merge
 (PHeap.merge Empty h) = h
@@ -34,6 +28,15 @@
 (PHeap.deleteMin Empty) = Empty
 (PHeap.deleteMin (Tree x hs)) = (PHeap.mergePairs hs)
 
+// Find minimum element
+(PHeap.findMin Empty) = (Maybe.None)
+(PHeap.findMin (Tree x hs)) = x
+
 // Constructs a pairing heap from a list
 (PHeap.fromList Nil) = Empty
 (PHeap.fromList (Cons x xs)) = (PHeap.merge (PHeap.singleton x) (PHeap.fromList xs))
+
+(Main) = 
+    let heap1 = (PHeap.fromList [1,2,3])
+    let heap2 = (PHeap.fromList [6,5,4])
+    (PHeap.merge heap1 heap2)
