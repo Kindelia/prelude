@@ -1,0 +1,47 @@
+// Bottom-up MergeSort
+
+// Creates a list of doubleton ordered lists from a regular list
+// List.ToSingleton(xs: List) -> List<List>
+(List.ToDoubleton  Nil                ) = Nil
+(List.ToDoubleton (Cons x  Nil       )) = (Cons (Cons x Nil) Nil)
+(List.ToDoubleton (Cons x (Cons y ys))) =
+    let head = (Merge (Cons x Nil) (Cons y Nil))
+    let tail = (List.ToDoubleton ys)
+    (Cons head tail)
+
+// Merges two ordered lists
+// Merge(xs: List, ys: List) -> List
+(Merge Nil ys) = ys
+(Merge xs Nil) = xs
+(Merge (Cons x xs) (Cons y ys)) = (Merge.aux (< x y) (Cons x xs) (Cons y ys))
+    (Merge.aux 1 (Cons x xs) ys) = (Cons x (Merge xs ys))
+    (Merge.aux 0 xs (Cons y ys)) = (Cons y (Merge xs ys))
+
+// Merges a list of lists 2-by-2
+// Example1: [[2],[3],[4],[1],[9],[5]] -> [[2,3],[1,4],[5,9]]
+// Example2: [[2,3],[1,4],[5,9]] -> [[1,2,3,4],[5,9]]
+// MergeByTwo(xs: List<List>) -> List<List>
+(MergeByTwo  Nil                ) = Nil
+(MergeByTwo (Cons x  Nil)       ) = (Cons x Nil)
+(MergeByTwo (Cons x (Cons y ys))) =
+    let head = (Merge x y)
+    let tail = (MergeByTwo ys)
+    (Cons head tail)
+
+// Sorts a list using the Mergesort algorithm
+// Mergesort(xs: List) -> List
+(Mergesort xs) = (Mergesort.aux (List.ToDoubleton xs))
+    (Mergesort.aux  Nil        ) = Nil
+    (Mergesort.aux (Cons x Nil)) = x
+    (Mergesort.aux (Cons x xs )) =
+        let merged = (MergeByTwo (Cons x xs))
+        (Mergesort.aux merged)
+
+// Generates a random list
+// Copied from https://raw.githubusercontent.com/Kindelia/HVM/b09c6e5/bench/QuickSort/main.hvm
+(Randoms s 0) = (Nil)
+(Randoms s l) = (Cons s (Randoms (+ (* s 1664525) 1013904223) (- l 1)))
+
+
+(Main n) =
+    (Mergesort (Randoms 1 n))
