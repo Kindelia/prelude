@@ -2,7 +2,9 @@
 // by Okasaki (2005)
 
 // type MHeap = Empty | Tree nod element lsubtree rsubtree,
-// where nod stands for number of nodes 
+// where nod stands for number of nodes
+
+// 
 
 // Find minimum element
 (MHeap.findMin Empty) = (Maybe.None)
@@ -21,7 +23,36 @@
 // Merging function (incompleta)
 (MHeap.merge h Empty) = h
 (MHeap.merge Empty h) = h
-(MHeap.merge (Tree s1 x a1 b1) (Tree s2 y a2 b2)) = (MHeap.merge.aux (> x y) (Tree s1 x a1 b1) (Tree s2 y a2 b2))
-    (MHeap.merge.aux 1 )
+(MHeap.merge (Tree s1 x a1 b1) (Tree s2 y a2 b2)) = (MHeap.merge.aux (<= x y) (Tree s1 x a1 b1) (Tree s2 y a2 b2))
+    (MHeap.merge.aux 1 (Tree s1 x a1 b1) (Tree s2 y a2 b2)) = (MHeap.join (Tree s1 x a1 b1) (Tree s2 y a2 b2))
+    (MHeap.merge.aux 0 (Tree s1 x a1 b1) (Tree s2 y a2 b2)) = (MHeap.join (Tree s2 y a2 b2) (Tree s1 x a1 b1))
 
+// Helper function for merge. It is called with the first tree being the biggest
+// and constructing a new tree (incompleta)
+(MHeap.join (Tree s1 x a1 b1) c) = 
+    let biggest = (MHeap.biggest3 (MHeap.size a1) (MHeap.size b1) (MHeap.size c))
+    (MHeap.join.aux biggest a b c) 
+    (Tree (+ s1 s2) x (MHeap.biggest a1 b1 (Tree s2 x a2 b2)))
+
+// Functions to find the biggest number
+(MHeap.biggest2 a b) = (MHeap.biggest2.aux (<= a b) a b)
+    (MHeap.biggest2.aux 1 a b) = a
+    (MHeap.biggest2.aux 0 a b) = b
+
+(MHeap.biggest3 a b c) = (MHeap.biggest2 (MHeap.biggest2 a b) c)
+    
+
+
+
+// Extracts the size (measured by the number of nodes in this implementation)
+(MHeap.size Empty) = 0
 (MHeap.size (Tree s _ _ _)) = s
+
+// Tuple functions
+(Tuple.fst (Tuple a _ _)) = a
+(Tuple.snd (Tuple _ b _)) = b
+(Tuple.trd (Tuple _ _ c)) = c
+
+(Main) =
+    (Tuple aa bb cc) = (Tuple 1 2 3)
+    aa
