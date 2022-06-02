@@ -1,0 +1,27 @@
+// Implementation based on the paper Alternatives to Two Classic Data Structures,
+// by Okasaki (2005)
+
+// type MHeap = Empty | Tree nod element lsubtree rsubtree,
+// where nod stands for number of nodes 
+
+// Find minimum element
+(MHeap.findMin Empty) = (Maybe.None)
+(MHeap.findMin (Tree _ x _ _)) = x
+
+// Delete minimum element
+(MHeap.deleteMin Empty) = Empty
+(MHeap.deleteMin (Tree _ _ a b)) = (MHeap.merge a b)
+
+// Singleton heap
+(MHeap.singleton x) = (Tree 1 x Empty Empty)
+
+// Insert an element into a heap
+(MHeap.insert x h) = (MHeap.merge (MHeap.singleton x) h)
+
+// Merging function (incompleta)
+(MHeap.merge h Empty) = h
+(MHeap.merge Empty h) = h
+(MHeap.merge (Tree s1 x a1 b1) (Tree s2 y a2 b2)) = (MHeap.merge.aux (> x y) (Tree s1 x a1 b1) (Tree s2 y a2 b2))
+    (MHeap.merge.aux 1 )
+
+(MHeap.size (Tree s _ _ _)) = s
