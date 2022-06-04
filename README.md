@@ -73,7 +73,7 @@ maybe you can find more about then on
 * Priority Search Queues
 * Bootstrapping one-sided flexible arrays
 * New catenable and non-catenable deques
-* Maxiphobic heaps
+* ~~Maxiphobic heaps (done)~~
 * Purely Functional Worst Case Constant Time Catenable Sorted Lists
 * Confluently Persistent Tries for Efficient Version Control
 * A new purely functional delete algorithm for red-black trees
