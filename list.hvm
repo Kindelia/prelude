@@ -54,9 +54,10 @@
 
 (Intercalate xs xss) = (Concat (Intersperse xs xss))
 
-// TODO: Make transpose work for lists with different lengths
-(Transpose (Cons Nil _)) = (Nil)
-(Transpose (Cons x xs))  = (Cons (Map @y(Head y) (Cons x xs)) (Transpose (Map @y(Tail y) (Cons x xs))))
+(Transpose Nil Nil) = (Nil)
+(Transpose (Cons x xs) Nil) = Cons( x Transpose(xs Nil))
+(Transpose Nil (Cons x xs)) = Cons ( x Transpose ( Nil xs))
+(Transpose (Cons x xs) (Cons y ys) ) = Cons(Cons (x y) Transpose (xs ys)) 
 
 (Subsequences xs) = (Cons Nil (NonEmptySubsequences xs))
     (NonEmptySubsequences Nil)         = (Nil)
@@ -75,12 +76,14 @@
 (Foldl _ n Nil)         = n
 (Foldl f n (Cons x xs)) = (Foldl f (f n x) xs)  
 
-// TODO: Foldl'
+(Foldl' _ n Nil)         = n
+(Foldl' f n (Cons x xs)) = (Foldl' f (f n x) xs)  
 
 (Foldl1 _ Nil)         = (Error.emptylist)
 (Foldl1 f (Cons x xs)) = (Foldl f x xs)
 
-// TODO: Foldl1'
+(Foldl1' _ Nil)         = (Error.emptylist)
+(Foldl1' f (Cons x xs)) = (Foldl' f x xs)
 
 (Foldr _ n Nil)         = n
 (Foldr f n (Cons x xs)) = (f x (Foldr f n xs))
@@ -151,7 +154,8 @@
 (Scanl _ q Nil)         = (Cons q Nil)
 (Scanl f q (Cons x xs)) = (Cons q (Scanl f (f q x) xs))  
 
-// TODO: Scanl'
+(Scanl' _ q Nil)         = (Cons q Nil)
+(Scanl' f q (Cons x xs)) = (Cons q (Scanl' f (f q x) xs))
 
 (Scanl1 _ Nil)         = (Nil)
 (Scanl1 f (Cons x xs)) = (Scanl f x xs)
