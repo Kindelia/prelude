@@ -1,0 +1,65 @@
+// Implementation based on the paper Alternatives to Two Classic Data Structures,
+// by Okasaki (2005)
+
+// type MHeap = Empty | Tree nod element lsubtree rsubtree,
+// where nod stands for number of nodes
+
+// Maxiphobic heaps get their name from their merge function. After choosing the smallest
+// heap to be the root, it avoids merging the biggest heap out of the three left (the biggest
+// of the two original heaps and the two subtrees of the smallest).
+
+// Tuple elements' extraction functions
+(Tuple.fst (Tuple a _ _)) = a
+(Tuple.snd (Tuple _ b _)) = b
+(Tuple.trd (Tuple _ _ c)) = c
+
+// Find minimum element
+(MHeap.findMin Empty) = (Maybe.None)
+(MHeap.findMin (Tree _ x _ _)) = x
+
+// Delete minimum element
+(MHeap.deleteMin Empty) = Empty
+(MHeap.deleteMin (Tree _ _ a b)) = (MHeap.merge a b)
+
+// Singleton heap
+(MHeap.singleton x) = (Tree 1 x Empty Empty)
+
+// Insert an element into a heap
+(MHeap.insert x h) = (MHeap.merge (MHeap.singleton x) h)
+
+// Merging function
+(MHeap.merge h Empty) = h
+(MHeap.merge Empty h) = h
+(MHeap.merge a b) = (MHeap.merge.aux (<= (MHeap.findMin a) (MHeap.findMin b)) a b)
+    (MHeap.merge.aux 1 a b) = (MHeap.join a b)
+    (MHeap.merge.aux 0 a b) = (MHeap.join b a)
+
+// Helper function for merge. It is called with the first tree having the smallest
+// root and constructing a new tree
+(MHeap.join (Tree s x a b) c) = 
+    let biggestFirst = (MHeap.orderBySize a b c)
+    let aa = (Tuple.fst biggestFirst)
+    let bb = (Tuple.snd biggestFirst)
+    let cc = (Tuple.trd biggestFirst)
+    (Tree (+ s (MHeap.size c)) x aa (MHeap.merge bb cc))
+
+// Helper function to join. Forces a to be the biggest heap
+(MHeap.orderBySize a b c) = 
+    let as = (MHeap.size a)
+    let bs = (MHeap.size b)
+    let cs = (MHeap.size c)
+    (MHeap.orderBySize.aux (>= as bs) (>= bs cs) (>= cs as) a b c)
+        (MHeap.orderBySize.aux 1 1 _ a b c) = (Tuple a b c)
+        (MHeap.orderBySize.aux _ 1 1 a b c) = (Tuple b a c)
+        (MHeap.orderBySize.aux 1 _ 1 a b c) = (Tuple c a b)
+
+// Extracts the size (measured by the number of nodes in this implementation)
+(MHeap.size Empty) = 0
+(MHeap.size (Tree s _ _ _)) = s
+
+// Create heap from list
+(MHeap.fromList Nil) = Empty
+(MHeap.fromList (Cons x xs)) = (MHeap.merge (MHeap.singleton x) (MHeap.fromList xs))
+
+(Main) =
+    (MHeap.fromList [5,4,3,2,1])
