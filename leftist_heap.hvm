@@ -1,0 +1,50 @@
+// Leftist Heap implementation based on Okasaki's book
+
+// From (Okasaki, 1998): "Leftist heaps are heap-ordered binary trees that satisfy the
+// leftist property: the rank of any left child is at least as large as the rank of its
+// right sibling. The rank of a node is defined to be the length of its right spine
+// (i.e., the rightmost path from the node in question to an empty node). A simple
+// consequence of the leftist property is that the right spine of any node is always
+// the shortest path to an empty node" 
+
+// The Tree constructor takes 4 parametres: rank, element, left subtree/empty
+// and right subtree/empty
+
+// Merges two trees. Merge is called recursively on the right subtree of the tree with 
+// the smallest element and the other tree. MakeT is a helper function which swaps two
+// sibling trees to maintain the leftist property
+(LHeap.merge h Empty) = h
+(LHeap.merge Empty h) = h
+(LHeap.merge (Tree _ x a1 b1) (Tree _ y a2 b2)) = (LHeap.mergeAux (<= x y) (Tree _ x a1 b1) (Tree _ y a2 b2))
+    (LHeap.mergeAux 1 (Tree _ x a1 b1) (Tree _ y a2 b2)) = (LHeap.makeT x a1 (LHeap.merge b1 (Tree _ y a2 b2)))
+    (LHeap.mergeAux 0 (Tree _ x a1 b1) (Tree _ y a2 b2)) = (LHeap.makeT y a2 (LHeap.merge (Tree _ x a1 b1) b2))
+
+// Gets the rank
+(LHeap.rank Empty) = 0
+(LHeap.rank (Tree r _ _ _)) = r
+
+// Helper function to Merge. Creates a tree and swaps the subtrees if needed to 
+// maintain the leftist property. 
+(LHeap.makeT x a b) = (LHeap.makeTAux (>= (LHeap.rank a) (LHeap.rank b)) x a b)
+    (LHeap.makeTAux 1 x a b) = (Tree (+ (LHeap.rank b) 1) x a b)
+    (LHeap.makeTAux 0 x a b) = (Tree (+ (LHeap.rank a) 1) x b a)
+
+// Singleton heap
+(LHeap.singleton x) = (Tree 1 x Empty Empty)
+
+// Inserts an element to a heap
+(LHeap.insert x h) = (LHeap.merge (LHeap.singleton x) h)
+
+// Finds the minimum element. Returns Maybe.None if called on an empty heap.
+(LHeap.findMin Empty) = Maybe.None
+(LHeap.findMin (Tree _ x a b)) = x
+
+// Deletes the node with the minimum element. Returns Empty if called on an empty heap.
+(LHeap.deleteMin Empty) = Empty
+(LHeap.deleteMin (Tree _ x a b)) = (LHeap.merge a b)
+
+// Generates a leftist heap from a list
+(LHeap.fromList Nil) = Empty
+(LHeap.fromList (Cons x xs)) = (LHeap.merge (LHeap.singleton x) (LHeap.fromList xs))
+
+(Main) = (LHeap.fromList [5,4,2,1,3])

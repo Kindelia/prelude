@@ -2,7 +2,7 @@
 
 To complete
 [HVM](https://github.com/Kindelia/HVM)
-development we need to decide which purely functional data structures are going to be used on Kindelia
+development, we need to decide which purely functional data structures are going to be used on Kindelia
 to handle access information on memory.
 
 The image below represents partially what we are interested in:
@@ -11,7 +11,7 @@ The image below represents partially what we are interested in:
     <img src="https://i.imgur.com/AoVinac.jpeg">
 </p>
 
-To decide the best methods, we need to implement different algorithms of data structures and compare the number of "rewrites" and "memory" wasted.
+To decide which methods work better, we need to implement different algorithms and data structures and compare the number of "rewrites" and "memory" wasted.
 
 A great source of functional algorithms with examples is the
 [Okasaki Book](https://br1lib.org/book/502927/5b4598)
@@ -19,8 +19,8 @@ A great source of functional algorithms with examples is the
 [this list of links](https://cstheory.stackexchange.com/questions/1539/whats-new-in-purely-functional-data-structures-since-okasaki).
 
 There is a
-[video tutorial](https://www.youtube.com/watch?v=ECstIu4I3NM) in portuguese
-made by kindelia team explaining how to implement the patricia tree,
+[video tutorial](https://www.youtube.com/watch?v=ECstIu4I3NM) (in portuguese),
+made a Kindelia team member, explaining how to implement the patricia tree,
 based on this
 [paper](https://ittc.ku.edu/~andygill/papers/IntMap98.pdf).
 
@@ -35,24 +35,22 @@ maybe you can find more about then on
 ### Okasaki
 
 * ~~Lists (done)~~
+* ~~Bottom-Up Mergesort (done)~~
+  * ~~Sortable Collections with Bottom-Up Mergesort(done)~~
 * Binary Search Trees (Miguel)
-* Leftist Heaps (Guilherme)
+* ~~Leftist Heaps (done)~~
 * ~~Red-Black Trees (done)~~
 * Streams
 * Queues (Daniel e Lucas)
 * ~~Binomial Heaps (done)~~
 * Splay Heaps
-* Pairing Heaps
+* ~~Pairing Heaps (done)~~
 
 #### Advanced
 
-* The Banker's Method
-* The Physicist's Method
 * Lazy Pairing Heaps
 * Scheduling
 * Real-Time Queues
-* Binomial Heaps
-* Bottom-Up Mergesort with Sharing
 * Batched Rebuilding
 * Global Rebuilding
 * Lazy rebuilding
