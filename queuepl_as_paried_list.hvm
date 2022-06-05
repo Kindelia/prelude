@@ -1,0 +1,38 @@
+// // Chris Okasaki
+// // Simple and efficient purely functional queues and deques
+
+// // Queues as paried List    QueuePL
+// // []q                  =   <[],[]>
+// // |<L,R>|q             =   |L|+|R|     // L is the first part of the queue
+// // insert(e,<L,R>)      =   <L,e:R>     // R is the second part of the queue inverted
+// // remove<L,R>          =   <hd L,<tl L,R>>     {|L|>0}
+// //                      =   remove<rev R,[]>    {|L|=0}
+(QueuePL Nil)                   =    (Pair Nil Nil)
+(QueuePL (Cons l r))            =    (Pair l (Rev r))
+
+// // Insert element to queue
+(Push e (Pair l r))     =   (Pair l (Cons e r))
+
+// // Remove element of the queue
+(Pop (Pair Nil Nil))        =   (Pair Nil Nil)
+(Pop (Pair Nil r))          =   (Pop (Pair (Rev r) Nil))   
+(Pop (Pair (Cons l ls) r))  =   (Pair ls r)
+
+// Reverse list
+(Rev xs)                        =   (RevAux xs Nil)
+    (RevAux Nil ys)             =   ys
+    (RevAux (Cons x xs) ys)     =   (RevAux xs (Cons x ys))
+
+// RecursivePush/Pop mata hvm
+(RecursivePush 0 e list)    =   list
+(RecursivePush n e list)    =   (RecursivePush (- n 1) e (Push e list))
+
+(RecursivePop 0 list)       =   list
+(RecursivePop n list)       =   (RecursivePop (- n 1) (Pop list))
+
+
+(Main) =
+    let queue = (QueuePL Nil)
+    // (Push 1 queue)
+    let queue = (RecursivePush 10 1 queue)
+    (Pop queue)
