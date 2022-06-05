@@ -1,9 +1,6 @@
-# list.hvm
-# queuepl.hvm
-# queuepll.hvm
-# queuepe.hvm
+queue_with_pre_evaluation.hvm
 # queue.hvm
-# deque.hvm
-# dequec.hvm
-# stack.hvm
+deque.hvm
+dequec.hvm
+stack.hvm
 # .gitignore
